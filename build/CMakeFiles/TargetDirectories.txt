@@ -1,0 +1,6 @@
+/home/doozkawa/Bureau/these/source/treelogdefectsegmentation/build/CMakeFiles/rebuild_cache.dir
+/home/doozkawa/Bureau/these/source/treelogdefectsegmentation/build/CMakeFiles/colorizeMesh.dir
+/home/doozkawa/Bureau/these/source/treelogdefectsegmentation/build/CMakeFiles/segunroll.dir
+/home/doozkawa/Bureau/these/source/treelogdefectsegmentation/build/CMakeFiles/segmentation.dir
+/home/doozkawa/Bureau/these/source/treelogdefectsegmentation/build/CMakeFiles/edit_cache.dir
+/home/doozkawa/Bureau/these/source/treelogdefectsegmentation/build/CMakeFiles/segcyl.dir
