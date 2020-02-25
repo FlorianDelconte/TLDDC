@@ -242,7 +242,7 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
 
   normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
   double normalizedValue;
-  std::vector<unsigned int > t;
+  std::vector<unsigned int > temp;
   //loop on all cells of unrolled surface
   for(unsigned int i = 0; i < height_div; i++){
     for(unsigned int j = 0; j < angle_div; j++){
@@ -251,9 +251,9 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
       current_resX=angle_div;
       current_resY=height_div;
       //get the vector of point in cells i,j
-      t=unrolled_surface[i][j];
+      temp=unrolled_surface[i][j];
       //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
-      while(t.empty()&& decreaseHit<64){
+      while(temp.empty()&& decreaseHit<64){
         //get the top left corner of the region containing P
         topLeftCornerHeight=(i/decreaseHit)*decreaseHit;
         topLeftCornerTheta=(j/decreaseHit)*decreaseHit;
@@ -263,19 +263,19 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
             //check if cells of region is in unrolled surface -> check no segmentation fault
             if((k<height_div)&&(l<angle_div)){
               //unlarge  vector size
-              t.reserve(t.size() + unrolled_surface[k][l].size());
+              temp.reserve(temp.size() + unrolled_surface[k][l].size());
               //concat vector
-              t.insert(t.end(), unrolled_surface[k][l].begin(),  unrolled_surface[k][l].end());
+              temp.insert(temp.end(), unrolled_surface[k][l].begin(),  unrolled_surface[k][l].end());
             }
           }
         }
         decreaseHit*=decreaseHit;
       }
       //if t is empty, thats means that even with a multi scale resolution( to 1/(4^5)) we can't find info
-      if(!t.empty()){
-        //moyenneRadius=getMeansVector(t);
+      if(!temp.empty()){
+        moyenneRadius=getMeansVector(temp);
         //moyenneRadius=getMaxVector(t);
-        moyenneRadius=getMedianVector(t);
+        //moyenneRadius=getMedianVector(t);
         normalizedValue=((1/(maxRadius-minRadius))*(moyenneRadius-maxRadius))+1;
         normalizedMap.at<double>(i, j) = normalizedValue;
       }
