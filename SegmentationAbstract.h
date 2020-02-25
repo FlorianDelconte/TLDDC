@@ -31,6 +31,14 @@ struct CylindricalPointOrderRadius {
     bool operator() (CylindricalPoint p1, CylindricalPoint p2);
 };
 
+struct CylindricalPointOrderAngle {
+    bool operator() (CylindricalPoint p1, CylindricalPoint p2);
+};
+
+struct CylindricalPointOrderArcLenght {
+    bool operator() (CylindricalPoint p1, CylindricalPoint p2);
+};
+
 
 class SegmentationAbstract{
     public:

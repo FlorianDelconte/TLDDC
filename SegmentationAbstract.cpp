@@ -35,6 +35,17 @@ bool
 CylindricalPointOrderRadius::operator() (CylindricalPoint p1, CylindricalPoint p2) {
         return p1.radius < p2.radius;
 }
+bool
+CylindricalPointOrderAngle::operator() (CylindricalPoint p1, CylindricalPoint p2) {
+        return p1.angle < p2.angle;
+}
+
+bool
+CylindricalPointOrderArcLenght::operator() (CylindricalPoint p1, CylindricalPoint p2) {
+        double arcLengtP1=p1.radius*p1.angle;
+        double arcLengtP2=p2.radius*p2.angle;
+        return arcLengtP1 < arcLengtP2;
+}
 
 void
 SegmentationAbstract::init(){
