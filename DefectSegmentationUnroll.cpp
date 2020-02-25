@@ -86,7 +86,9 @@ DefectSegmentationUnroll::computeDiscretisation(){
     radius_average+=mpCurrent.radius;
   }
   radius_average/=myPoints.size();
-
+  //CylindricalPointOrderRadius RadiusOrder;
+  //auto minMaxElemRad = std::minmax_element(myPoints.begin(), myPoints.end(), RadiusOrder);
+  //double maxRadius = (*minMaxElemRad.second).radius;
   circum= 2*M_PI*radius_average;
   //compute height
   double height;
@@ -104,18 +106,22 @@ void
 DefectSegmentationUnroll::unrollSurface() {
   trace.info()<<"height :"<<height_div<<std::endl;
   trace.info()<<"angle  :"<<angle_div<<std::endl;
-
+  //compute min and max Height
   CylindricalPointOrder heightOrder;
   auto minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), heightOrder);
   double minHeight = (*minMaxElem.first).height;
   double maxHeight = (*minMaxElem.second).height;
-
+  //compute min and max angle
+  CylindricalPointOrderAngle angleOrder;
+  auto minMaxElemRad = std::minmax_element(myPoints.begin(), myPoints.end(), angleOrder);
+  double minAngle = (*minMaxElemRad.first).angle;
+  double maxAngle = (*minMaxElemRad.second).angle;
   CylindricalPoint mpCurrent;
   int posAngle, posHeight;
   for(unsigned int i = 0; i < myPoints.size(); i++){
     mpCurrent=myPoints.at(i);
-    //change range [0,2Pi] to [0,angle_div-1]
-    posAngle=roundf((((angle_div-1)/(2*M_PI))*(mpCurrent.angle-(2*M_PI)))+(angle_div-1));
+    //change range [minAngle,maxAngle] to [0,angle_div-1]
+    posAngle=roundf((((angle_div-1)/(maxAngle-minAngle))*(mpCurrent.angle-(maxAngle)))+(angle_div-1));
     //change range [minHeight,maxHeight] to [0,height_div-1]
     posHeight=roundf((((height_div-1)/(maxHeight-minHeight))*(mpCurrent.height-maxHeight))+(height_div-1));
     //add index point to the unrolled_surface
@@ -136,11 +142,6 @@ void
 DefectSegmentationUnroll::createVisuImage(std::string s) {
   cv::Mat grayscalemap(height_div,angle_div,CV_8UC1,cv::Scalar(0));
   cv::Mat reliefPictures(height_div, angle_div, CV_8UC3, cv::Scalar(110, 110, 110));
-  CylindricalPointOrderRadius radiusOrder;
-  auto minMaxElem2 = std::minmax_element(myPoints.begin(), myPoints.end(), radiusOrder);
-  double minRadius = (*minMaxElem2.first).radius;
-  double maxRadius = (*minMaxElem2.second).radius;
-
   int grayscaleValue;
   double normalizedValue;
   for(unsigned int i = 0; i < height_div; i++){
@@ -165,10 +166,11 @@ DefectSegmentationUnroll::computeNormalizedImage() {
   double normalizedValue;
   for(unsigned int i = 0; i < height_div; i++){
     for(unsigned int j = 0; j < angle_div; j++){
+      //moyenneRadius=getMaxVector(unrolled_surface[i][j]);
+      //moyenneRadius=getMeansVector(unrolled_surface[i][j]);
       moyenneRadius=getMaxVector(unrolled_surface[i][j]);
       normalizedValue=((1/(maxRadius-minRadius))*(moyenneRadius-maxRadius))+1;
       normalizedMap.at<double>(i, j) = normalizedValue;
-      //trace.info()<<moyenneRadius<<std::endl;
     }
   }
 }
@@ -211,22 +213,37 @@ DefectSegmentationUnroll::getMedianVector(std::vector<unsigned int > v) {
 
     std::sort(vectorOfRadius.begin(), vectorOfRadius.end());
     if (size % 2 == 0){
-      //CylindricalPoint mpCurrent = *it;
-      //trace.info()<<vectorOfRadius.at(size / 2 - 1)<<std::endl;
       median=(vectorOfRadius.at(size / 2 - 1) + vectorOfRadius.at(size / 2)) / 2;
     }else{
-      //trace.info()<<vectorOfRadius.at(size / 2)<<std::endl;
       median=vectorOfRadius.at(size / 2);
     }
-    //for(auto it = vTemp.begin(); it != vTemp.end(); it++) {
-      //CylindricalPoint mpCurrent = *it;
-      //trace.info()<<mpCurrent.radius<<std::endl;
-    //}
-    //trace.info()<<"----------------------------------------"<<std::endl;
   }
   return median;
 }
-
+bool
+DefectSegmentationUnroll::detectCellsIn(unsigned int i, unsigned int j){
+  bool CellsIn=true;
+  std::vector<unsigned int > tempUp = unrolled_surface[i][j];
+  std::vector<unsigned int > tempDown = unrolled_surface[i][j];
+  //trace.info()<<"i"<<i<<"j"<<j<<std::endl;
+  unsigned int iUp=i;
+  unsigned int iDown=i;
+  while(tempUp.empty() && (iUp>0)){
+    iUp-=1;
+    //trace.info()<<"i"<<i<<"j"<<j<<std::endl;
+    tempUp=unrolled_surface[iUp][j];
+  }
+  while(tempDown.empty() && (iDown<height_div-1)){
+    iDown+=1;
+    //trace.info()<<"i"<<i<<"j"<<j<<std::endl;
+    tempDown=unrolled_surface[iDown][j];
+  }
+  
+  if((iUp==0 && tempUp.empty()) || (iDown==height_div-1 && tempDown.empty())){
+    CellsIn=false;
+  }
+  return CellsIn;
+}
 void
 DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
   trace.info()<<"start compute Multi-Scale image..."<<std::endl;
@@ -236,6 +253,7 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
   double maxRadius = (*minMaxElem2.second).radius;
 
   int decreaseHit;
+  int maxDecreaseHit=0;
   int current_resX,current_resY;
   double moyenneRadius;
   int topLeftCornerHeight,topLeftCornerTheta;
@@ -243,43 +261,49 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
   normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
   double normalizedValue;
   std::vector<unsigned int > temp;
+  
   //loop on all cells of unrolled surface
   for(unsigned int i = 0; i < height_div; i++){
     for(unsigned int j = 0; j < angle_div; j++){
-      decreaseHit=2;
-      moyenneRadius=0.;
-      current_resX=angle_div;
-      current_resY=height_div;
-      //get the vector of point in cells i,j
-      temp=unrolled_surface[i][j];
-      //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
-      while(temp.empty()&& decreaseHit<64){
-        //get the top left corner of the region containing P
-        topLeftCornerHeight=(i/decreaseHit)*decreaseHit;
-        topLeftCornerTheta=(j/decreaseHit)*decreaseHit;
-        //loop on cells (of unrolledSurace) in region containing P
-        for( int k = topLeftCornerHeight; k < (topLeftCornerHeight+decreaseHit); k++){
-          for( int l = topLeftCornerTheta; l < (topLeftCornerTheta+decreaseHit); l++){
-            //check if cells of region is in unrolled surface -> check no segmentation fault
-            if((k<height_div)&&(l<angle_div)){
-              //unlarge  vector size
-              temp.reserve(temp.size() + unrolled_surface[k][l].size());
-              //concat vector
-              temp.insert(temp.end(), unrolled_surface[k][l].begin(),  unrolled_surface[k][l].end());
+      if(detectCellsIn(i,j)){
+        decreaseHit=2;
+        moyenneRadius=0.;
+        current_resX=angle_div;
+        current_resY=height_div;
+        //get the vector of point in cells i,j
+        temp=unrolled_surface[i][j];
+        //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
+        while(temp.empty()&& decreaseHit<64){
+          //get the top left corner of the region containing P
+          topLeftCornerHeight=(i/decreaseHit)*decreaseHit;
+          topLeftCornerTheta=(j/decreaseHit)*decreaseHit;
+          //loop on cells (of unrolledSurace) in region containing P
+          for( int k = topLeftCornerHeight; k < (topLeftCornerHeight+decreaseHit); k++){
+            for( int l = topLeftCornerTheta; l < (topLeftCornerTheta+decreaseHit); l++){
+              //check if cells of region is in unrolled surface -> check no segmentation fault
+              if((k<height_div)&&(l<angle_div)){
+                //unlarge  vector size
+                temp.reserve(temp.size() + unrolled_surface[k][l].size());
+                //concat vector
+                temp.insert(temp.end(), unrolled_surface[k][l].begin(),  unrolled_surface[k][l].end());
+              }
             }
           }
+          decreaseHit*=2;
+          if(decreaseHit>=maxDecreaseHit){
+            maxDecreaseHit=decreaseHit;
+          }
         }
-        decreaseHit*=decreaseHit;
+        //if t is empty, thats means that even with a multi scale resolution( to 1/(4^5)) we can't find info
+        if(!temp.empty()){
+          moyenneRadius=getMeansVector(temp);
+          //moyenneRadius=getMaxVector(t);
+          //moyenneRadius=getMedianVector(t);
+          normalizedValue=((1/(maxRadius-minRadius))*(moyenneRadius-maxRadius))+1;
+          normalizedMap.at<double>(i, j) = normalizedValue;
+        }
       }
-      //if t is empty, thats means that even with a multi scale resolution( to 1/(4^5)) we can't find info
-      if(!temp.empty()){
-        moyenneRadius=getMeansVector(temp);
-        //moyenneRadius=getMaxVector(t);
-        //moyenneRadius=getMedianVector(t);
-        normalizedValue=((1/(maxRadius-minRadius))*(moyenneRadius-maxRadius))+1;
-        normalizedMap.at<double>(i, j) = normalizedValue;
-      }
-
     }
   }
+  trace.info()<<"maxDecreaseHit"<<maxDecreaseHit<<std::endl;
 }

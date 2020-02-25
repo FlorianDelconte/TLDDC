@@ -46,6 +46,10 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     **/
     void createVisuImage(std::string s);
   protected:
+     /**
+    return false if cells is consiedred as out of the mesh (function to skip noise in relief image)
+    **/
+    bool detectCellsIn(unsigned int i, unsigned int j);
     /**
     Cylindrical point from segment of centerline
     **/
