@@ -56,7 +56,7 @@ ADD_EXECUTABLE(segcyl MainCylinder Statistic IOHelper DefectSegmentationCylinder
 TARGET_LINK_LIBRARIES(segcyl ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
 
-ADD_EXECUTABLE(segunroll MainUnroll Statistic IOHelper DefectSegmentationUnroll SegmentationAbstract Matrix
+ADD_EXECUTABLE(segunroll MainUnroll Statistic IOHelper DefectSegmentationUnroll SegmentationAbstract 
     Centerline/Centerline)
 TARGET_LINK_LIBRARIES(segunroll   ${OpenCV_LIBS} ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT} )

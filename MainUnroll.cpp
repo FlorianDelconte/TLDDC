@@ -145,10 +145,7 @@ main(int argc,char **argv)
 
     trace.info()<<"arc:"<<patchWidth<<std::endl;
     trace.info()<<"fiber:"<<centerline.size()<<std::endl;
-    trace.info()<<"pointcloud:"<<pointCloud.size()<<std::endl;
-
-    //@TODO this segmentation methof don't need pathwidth/patchHeight/binWidth
-    DefectSegmentationUnroll sa(pointCloud, centerline, patchWidth, patchHeight, binWidth);
+    DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     std::string outputPrefix = vm["output"].as<std::string>();
     sa.init();
     sa.unrollSurface();
