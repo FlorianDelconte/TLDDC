@@ -41,7 +41,7 @@ DefectSegmentationUnroll::init(){
     computeVectorMarks();
     computePlaneNormals();
 	  convertToCcs();
-    computeDiscretisation();
+    computeMeasures();
     allocateExtra();
 }
 
@@ -74,48 +74,49 @@ DefectSegmentationUnroll::getPointfromSegmentId(unsigned int id){
   }
   return output;
 }
-
+/*******************************************************************************************************************************/
+/**************************************************UNROLLED MAP*****************************************************************/
+/*******************************************************************************************************************************/
 void
-DefectSegmentationUnroll::computeDiscretisation(){
+DefectSegmentationUnroll::computeMeasures(){
+  trace.info()<<"Compute measures..."<<std::endl;
   //compute mean circumference (approx by circle) => cricumference is two times Pi times radius
   double radius_average=0.;
   double circum;
+  double height;
   CylindricalPoint mpCurrent;
+
   for(unsigned int i = 0; i < myPoints.size(); i++){
     mpCurrent=myPoints.at(i);
     radius_average+=mpCurrent.radius;
   }
   radius_average/=myPoints.size();
-  //CylindricalPointOrderRadius RadiusOrder;
-  //auto minMaxElemRad = std::minmax_element(myPoints.begin(), myPoints.end(), RadiusOrder);
-  //double maxRadius = (*minMaxElemRad.second).radius;
+  //compute angle measures
+  CylindricalPointOrderAngle angleOrder;
+  auto minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), angleOrder);
+  minAngle = (*minMaxElem.first).angle;
+  maxAngle = (*minMaxElem.second).angle;
+  //compute radius measures
+  CylindricalPointOrderRadius RadiusOrder;
+  minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), RadiusOrder);
+  minRadius = (*minMaxElem.first).radius;
+  maxRadius = (*minMaxElem.second).radius;
   circum= 2*M_PI*radius_average;
-  //compute height
-  double height;
+  //compute height measures
   CylindricalPointOrder heightOrder;
-  auto minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), heightOrder);
-  double minHeight = (*minMaxElem.first).height;
-  double maxHeight = (*minMaxElem.second).height;
+  minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), heightOrder);
+  minHeight = (*minMaxElem.first).height;
+  maxHeight = (*minMaxElem.second).height;
   height=maxHeight-minHeight;
   //Discretisation of height and circum
   height_div=roundf(height);
   angle_div=roundf(circum);
+  trace.info()<<"Dicrestisation : X = "<<angle_div<<" Y = "<<height_div<<std::endl;
 }
 
 void
 DefectSegmentationUnroll::unrollSurface() {
-  trace.info()<<"height :"<<height_div<<std::endl;
-  trace.info()<<"angle  :"<<angle_div<<std::endl;
-  //compute min and max Height
-  CylindricalPointOrder heightOrder;
-  auto minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), heightOrder);
-  double minHeight = (*minMaxElem.first).height;
-  double maxHeight = (*minMaxElem.second).height;
-  //compute min and max angle
-  CylindricalPointOrderAngle angleOrder;
-  auto minMaxElemRad = std::minmax_element(myPoints.begin(), myPoints.end(), angleOrder);
-  double minAngle = (*minMaxElemRad.first).angle;
-  double maxAngle = (*minMaxElemRad.second).angle;
+  trace.info()<<"Compute Unrolled map..."<<std::endl;
   CylindricalPoint mpCurrent;
   int posAngle, posHeight;
   for(unsigned int i = 0; i < myPoints.size(); i++){
@@ -138,56 +139,184 @@ DefectSegmentationUnroll::unrollSurface() {
   }
   IOHelper::export2OFF(meshTest, "segmentPoints.off");*/
 }
-void
-DefectSegmentationUnroll::createVisuImage(std::string s) {
-  cv::Mat grayscalemap(height_div,angle_div,CV_8UC1,cv::Scalar(0));
-  cv::Mat reliefPictures(height_div, angle_div, CV_8UC3, cv::Scalar(110, 110, 110));
-  int grayscaleValue;
-  double normalizedValue;
-  for(unsigned int i = 0; i < height_div; i++){
-    for(unsigned int j = 0; j < angle_div; j++){
-      normalizedValue=normalizedMap.at<double>(i, j);
-      grayscaleValue=((255/1)*(normalizedValue-1))+255;
-      grayscalemap.at<uchar>(i, j) = grayscaleValue;
-    }
+bool
+DefectSegmentationUnroll::detectCellsIn(unsigned int i, unsigned int j){
+  //A cell is 'in' if we can't reach the top image or the bot image with empty cells
+  bool CellsIn=true;
+  
+  std::vector<unsigned int > tempUp = unrolled_surface[i][j];
+  std::vector<unsigned int > tempDown = unrolled_surface[i][j];
+  //ind for reach the top image
+  unsigned int iUp=i;
+  //ind for reach the bot image
+  unsigned int iDown=i;
+  //decrement ind while cells is empty
+  while(tempUp.empty() && (iUp>0)){
+    iUp-=1;
+    tempUp=unrolled_surface[iUp][j];
   }
-  cv::applyColorMap(grayscalemap, reliefPictures, cv::COLORMAP_JET);
-  imwrite( "unrollSurfacePictures/"+s, reliefPictures);
+  //increment ind while cells is empty
+  while(tempDown.empty() && (iDown<height_div-1)){
+    iDown+=1;
+    tempDown=unrolled_surface[iDown][j];
+  }
+  //check reached top of bot
+  if((iUp==0 && tempUp.empty()) || (iDown==height_div-1 && tempDown.empty())){
+    CellsIn=false;
+  }
+  return CellsIn;
 }
+
+/*******************************************************************************************************************************/
+/**************************************************NORMALIZED IMAGE*************************************************************/
+/*******************************************************************************************************************************/
 void
 DefectSegmentationUnroll::computeNormalizedImage() {
-  trace.info()<<"start compute normalized image..."<<std::endl;
-  CylindricalPointOrderRadius radiusOrder;
-  auto minMaxElem2 = std::minmax_element(myPoints.begin(), myPoints.end(), radiusOrder);
-  double minRadius = (*minMaxElem2.first).radius;
-  double maxRadius = (*minMaxElem2.second).radius;
+  trace.info()<<"start compute normalized image with max resolution : X = "<<angle_div<< " Y = "<<height_div <<std::endl;
   normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
   double moyenneRadius;
-  double normalizedValue;
+  double normalizedRadius;
+  std::vector<unsigned int > temp;
   for(unsigned int i = 0; i < height_div; i++){
     for(unsigned int j = 0; j < angle_div; j++){
-      //moyenneRadius=getMaxVector(unrolled_surface[i][j]);
-      //moyenneRadius=getMeansVector(unrolled_surface[i][j]);
-      moyenneRadius=getMaxVector(unrolled_surface[i][j]);
-      normalizedValue=((1/(maxRadius-minRadius))*(moyenneRadius-maxRadius))+1;
-      normalizedMap.at<double>(i, j) = normalizedValue;
+      //moyenneRadius=getMaxRadius(unrolled_surface[i][j]);
+      moyenneRadius=getMeansRadius(unrolled_surface[i][j]);
+      //moyenneRadius=getMaxRadius(unrolled_surface[i][j]);
+      normalizedRadius=normalize(moyenneRadius);
+      normalizedMap.at<double>(i, j) = normalizedRadius;
     }
   }
 }
 
-double
-DefectSegmentationUnroll::getMeansVector(std::vector<unsigned int > v) {
-  double moyenneRadius=0;
-  for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
-      CylindricalPoint mpCurrent = myPoints.at(*it);
-      moyenneRadius+=mpCurrent.radius;
+void
+DefectSegmentationUnroll::computeNormalizedImage(int decreaseFactor) {
+  trace.info()<<"start compute normalized image with decrease factor : 1 / "<<decreaseFactor<<std::endl;
+  //resolution of relief image
+  unsigned int resX=angle_div/decreaseFactor;
+  unsigned int resY=height_div/decreaseFactor;
+  trace.info()<<"new resolution : X = "<<resX<<" Y = "<<resY<<std::endl;
+  //init normalized map with the new resolution
+  normalizedMap=cv::Mat::zeros(resY+1,resX+1,CV_32FC4);
+  int topLeftCornerHeight;
+  int topLeftCornerTheta;
+  double radius=0.;
+  double normalizedRadius;
+  std::vector<unsigned int > temp;
+  int XNormMap,YNormMap;
+  //loop on the top left corner of all new cells
+  for(unsigned int i = 0; i < height_div; i+=decreaseFactor){
+    for(unsigned int j = 0; j < angle_div; j+=decreaseFactor){
+      //check if the cells is in the mesh -> to avoid some noise in the image
+      if(detectCellsIn(i,j)){
+        //[0;height_div] to [0;resY]
+        YNormMap =i/decreaseFactor;
+        //[0;angle_div] to [0;resX]
+        XNormMap=j/decreaseFactor;
+        //get all indice Points of i,j in a lower resolution
+        temp=getIndPointsInLowerResolution(i,j,decreaseFactor);
+        //decreaseFactor give in parameter need to be choosen for never have an empty vector in the lower resolution
+        assert(!temp.empty());
+        radius=getMaxRadius(temp);
+        normalizedRadius=normalize(radius);
+        normalizedMap.at<double>(YNormMap, XNormMap) = normalizedRadius;
+      }
+    }
   }
-  moyenneRadius/=v.size();
+  
+}
+
+void
+DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
+  trace.info()<<"start compute Multi-Scale normalized image..."<<std::endl;
+  int decreaseHit;
+  int maxDecreaseHit=0;
+  int current_resX,current_resY;
+  double moyenneRadius;
+  int topLeftCornerHeight,topLeftCornerTheta;
+
+  normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
+  double normalizedRadius;
+  std::vector<unsigned int > temp;
+  
+  //loop on all cells of unrolled surface
+  for(unsigned int i = 0; i < height_div; i++){
+    for(unsigned int j = 0; j < angle_div; j++){
+      if(detectCellsIn(i,j)){
+        decreaseHit=2;
+        moyenneRadius=0.;
+        current_resX=angle_div;
+        current_resY=height_div;
+        //get the vector of point in cells i,j
+        temp=unrolled_surface[i][j];
+        //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
+        while(temp.empty()&& decreaseHit<32){
+          //get all indice Points of i,j in a lower resolution
+          temp=getIndPointsInLowerResolution(i,j,decreaseHit);
+          //decrease resolution (1/decreaseHit)
+          decreaseHit*=2;
+          //keep the max decrease resolution
+          if(decreaseHit>=maxDecreaseHit){
+            maxDecreaseHit=decreaseHit;
+          }
+        }
+        //if t is empty, thats means that even with a multi scale resolution( to 1/(2^5)) we can't find info
+        if(!temp.empty()){
+          //trace.info()<<temp.size()<<std::endl;
+          moyenneRadius=getMeansRadius(temp);
+          //moyenneRadius=getMaxRadius(t);
+          //moyenneRadius=getMedianRadius(t);
+          normalizedRadius=normalize(moyenneRadius);
+          normalizedMap.at<double>(i, j) = normalizedRadius;
+        }
+      }
+    }
+  }
+  //computeNormalizedImage(maxDecreaseHit);
+}
+double 
+DefectSegmentationUnroll::normalize(double value){
+  return ((1/(maxRadius-minRadius))*(value-maxRadius))+1;
+}
+
+std::vector<unsigned int > 
+DefectSegmentationUnroll::getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF){
+  std::vector<unsigned int > outPutInd;
+  int topLeftCornerHeight,topLeftCornerTheta;
+  topLeftCornerHeight=(i/dF)*dF;
+  topLeftCornerTheta=(j/dF)*dF;
+  //loop on cells (of unrolledSurace) in region containing (i,j)
+  for( int k = topLeftCornerHeight; k < (topLeftCornerHeight+dF); k++){
+    for( int l = topLeftCornerTheta; l < (topLeftCornerTheta+dF); l++){
+      //check if cells of region is in unrolled surface -> check no segmentation fault
+      if((k < height_div)&&(l < angle_div)){
+      //unlarge  vector size
+      outPutInd.reserve(outPutInd.size() + unrolled_surface[k][l].size());
+      //concat vector
+      outPutInd.insert(outPutInd.end(), unrolled_surface[k][l].begin(),  unrolled_surface[k][l].end());
+      }
+    }
+  }
+  return outPutInd;
+}
+
+double
+DefectSegmentationUnroll::getMeansRadius(std::vector<unsigned int > v) {
+  double moyenneRadius=0.;
+  if(v.size()>0){
+    unsigned int IndP;
+    for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
+      IndP=*it;
+      CylindricalPoint mpCurrent = myPoints.at(IndP);
+      moyenneRadius+=mpCurrent.radius;
+    }
+    moyenneRadius/=v.size();
+  }
+  //trace.info()<<moyenneRadius<<std::endl;
   return moyenneRadius;
 }
 
 double
-DefectSegmentationUnroll::getMaxVector(std::vector<unsigned int > v) {
+DefectSegmentationUnroll::getMaxRadius(std::vector<unsigned int > v) {
   double maxRadius=INT_MIN;
   for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
       CylindricalPoint mpCurrent = myPoints.at(*it);
@@ -198,7 +327,7 @@ DefectSegmentationUnroll::getMaxVector(std::vector<unsigned int > v) {
   return maxRadius;
 }
 double
-DefectSegmentationUnroll::getMedianVector(std::vector<unsigned int > v) {
+DefectSegmentationUnroll::getMedianRadius(std::vector<unsigned int > v) {
   std::vector<double> vectorOfRadius;
   unsigned int size = v.size();
   double median=0.0;
@@ -220,90 +349,27 @@ DefectSegmentationUnroll::getMedianVector(std::vector<unsigned int > v) {
   }
   return median;
 }
-bool
-DefectSegmentationUnroll::detectCellsIn(unsigned int i, unsigned int j){
-  bool CellsIn=true;
-  std::vector<unsigned int > tempUp = unrolled_surface[i][j];
-  std::vector<unsigned int > tempDown = unrolled_surface[i][j];
-  //trace.info()<<"i"<<i<<"j"<<j<<std::endl;
-  unsigned int iUp=i;
-  unsigned int iDown=i;
-  while(tempUp.empty() && (iUp>0)){
-    iUp-=1;
-    //trace.info()<<"i"<<i<<"j"<<j<<std::endl;
-    tempUp=unrolled_surface[iUp][j];
-  }
-  while(tempDown.empty() && (iDown<height_div-1)){
-    iDown+=1;
-    //trace.info()<<"i"<<i<<"j"<<j<<std::endl;
-    tempDown=unrolled_surface[iDown][j];
-  }
-  
-  if((iUp==0 && tempUp.empty()) || (iDown==height_div-1 && tempDown.empty())){
-    CellsIn=false;
-  }
-  return CellsIn;
-}
+
+/*******************************************************************************************************************************/
+/**************************************************RGB IMAGE********************************************************************/
+/*******************************************************************************************************************************/
 void
-DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
-  trace.info()<<"start compute Multi-Scale image..."<<std::endl;
-  CylindricalPointOrderRadius radiusOrder;
-  auto minMaxElem2 = std::minmax_element(myPoints.begin(), myPoints.end(), radiusOrder);
-  double minRadius = (*minMaxElem2.first).radius;
-  double maxRadius = (*minMaxElem2.second).radius;
-
-  int decreaseHit;
-  int maxDecreaseHit=0;
-  int current_resX,current_resY;
-  double moyenneRadius;
-  int topLeftCornerHeight,topLeftCornerTheta;
-
-  normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
-  double normalizedValue;
-  std::vector<unsigned int > temp;
+DefectSegmentationUnroll::createVisuImage(std::string s) {
   
-  //loop on all cells of unrolled surface
-  for(unsigned int i = 0; i < height_div; i++){
-    for(unsigned int j = 0; j < angle_div; j++){
-      if(detectCellsIn(i,j)){
-        decreaseHit=2;
-        moyenneRadius=0.;
-        current_resX=angle_div;
-        current_resY=height_div;
-        //get the vector of point in cells i,j
-        temp=unrolled_surface[i][j];
-        //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
-        while(temp.empty()&& decreaseHit<64){
-          //get the top left corner of the region containing P
-          topLeftCornerHeight=(i/decreaseHit)*decreaseHit;
-          topLeftCornerTheta=(j/decreaseHit)*decreaseHit;
-          //loop on cells (of unrolledSurace) in region containing P
-          for( int k = topLeftCornerHeight; k < (topLeftCornerHeight+decreaseHit); k++){
-            for( int l = topLeftCornerTheta; l < (topLeftCornerTheta+decreaseHit); l++){
-              //check if cells of region is in unrolled surface -> check no segmentation fault
-              if((k<height_div)&&(l<angle_div)){
-                //unlarge  vector size
-                temp.reserve(temp.size() + unrolled_surface[k][l].size());
-                //concat vector
-                temp.insert(temp.end(), unrolled_surface[k][l].begin(),  unrolled_surface[k][l].end());
-              }
-            }
-          }
-          decreaseHit*=2;
-          if(decreaseHit>=maxDecreaseHit){
-            maxDecreaseHit=decreaseHit;
-          }
-        }
-        //if t is empty, thats means that even with a multi scale resolution( to 1/(4^5)) we can't find info
-        if(!temp.empty()){
-          moyenneRadius=getMeansVector(temp);
-          //moyenneRadius=getMaxVector(t);
-          //moyenneRadius=getMedianVector(t);
-          normalizedValue=((1/(maxRadius-minRadius))*(moyenneRadius-maxRadius))+1;
-          normalizedMap.at<double>(i, j) = normalizedValue;
-        }
-      }
+  int grayscaleValue;
+  double normalizedValue;
+  int rows = normalizedMap.rows;
+  int cols = normalizedMap.cols;
+  cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
+  cv::Mat reliefPictures(rows, cols, CV_8UC3, cv::Scalar(110, 110, 110));
+
+  for(unsigned int i = 0; i < rows; i++){
+    for(unsigned int j = 0; j < cols; j++){
+      normalizedValue=normalizedMap.at<double>(i, j);
+      grayscaleValue=((255/1)*(normalizedValue-1))+255;
+      grayscalemap.at<uchar>(i, j) = grayscaleValue;
     }
   }
-  trace.info()<<"maxDecreaseHit"<<maxDecreaseHit<<std::endl;
+  cv::applyColorMap(grayscalemap, reliefPictures, cv::COLORMAP_JET);
+  imwrite( "unrollSurfacePictures/"+s, reliefPictures);
 }
