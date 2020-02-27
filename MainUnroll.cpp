@@ -149,9 +149,10 @@ main(int argc,char **argv)
     std::string outputPrefix = vm["output"].as<std::string>();
     sa.init();
     sa.unrollSurface();
-    //sa.computeNormalizedImage();
+    //sa.computeNormalizedImage(32);
     //sa.createVisuImage(outputPrefix+".jpg");
+    //sa.computeNormalizedImage(8);
     sa.computeNormalizedImageMultiScale();
-    sa.createVisuImage(outputPrefix+"_multi.jpg");
+    sa.createVisuImage(outputPrefix+"_DecreaseFactor.jpg");
 
 }
