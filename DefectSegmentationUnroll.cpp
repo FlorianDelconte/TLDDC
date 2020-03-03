@@ -16,6 +16,7 @@
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/colormaps/HueShadeColorMap.h"
 
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
 #include <eigen3/Eigen/Dense>
@@ -40,25 +41,117 @@ DefectSegmentationUnroll::init(){
     computeBeginOfSegment();
     computeVectorMarks();
     computePlaneNormals();
-	  convertToCcs();
-    computeMeasures();
+
+    convertToCcs();
+
+    
     allocateExtra();
+    
+    computeEquations();
+    computeDistances();
+
+    //WARNING :Need to placed after computing eq
+    computeMeasures();
+    
 }
 
 
 void
 DefectSegmentationUnroll::allocateExtra(){
-
-  unrolled_surface.resize(height_div);
-  for (int i = 0; i < height_div; ++i)
-    unrolled_surface[i].resize(angle_div);
+  //allocate
+  //pre allocate size of unrolled surface
+  //unrolled_surface.resize(height_div);
+  //for (int i = 0; i < height_div; ++i)
+  //  unrolled_surface[i].resize(angle_div);
+  //pre allocate size of coefficent of line patch
+  coefficients.resize(pointCloud.size());
 }
 
 void
-DefectSegmentationUnroll::computeEquations(){}
+DefectSegmentationUnroll::computeEquations(){
+  trace.info()<<"Begin Compute Equation"<<std::endl;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPcl(new pcl::PointCloud<pcl::PointXYZ>);
+  for(int i = 0; i < pointCloud.size(); i++){
+      Z3i::RealPoint p = pointCloud.at(i);
+      cloudPcl->points.push_back(pcl::PointXYZ(p[0], p[1], p[2]));
+  }
+
+  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+  kdtree.setInputCloud (cloudPcl);
+
+  CylindricalPointOrder heightOrder;
+  auto minMaxElem = std::minmax_element(myPoints.begin(), myPoints.end(), heightOrder);
+  double minHeight = (*minMaxElem.first).height;
+  double maxHeight = (*minMaxElem.second).height;
+
+  int nbCores = getNumCores();
+  std::vector<std::thread> ts;
+  for(int i = 0; i < nbCores - 1; i++){
+      ts.push_back(std::thread(&DefectSegmentationUnroll::computeEquationsMultiThread, this, i, nbCores, kdtree, minHeight, maxHeight));
+  }
+  computeEquationsMultiThread(nbCores - 1, nbCores, kdtree, minHeight, maxHeight);
+  for(int i = 0; i < nbCores - 1; i++){
+      ts[i].join();
+  }
+  trace.info()<<"finish eq"<<std::endl;
+}
 
 void
-DefectSegmentationUnroll::computeDistances(){}
+DefectSegmentationUnroll::computeEquationsMultiThread(int threadId, int nbThread,const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree, double minHeight, double maxHeight){
+  double patchAngle = arcLength / radii;
+  for(unsigned int i = threadId; i < pointCloud.size();i+=nbThread){
+    Z3i::RealPoint currentPoint = pointCloud.at(i);
+    CylindricalPoint mpCurrent = myPoints.at(i);
+    pcl::PointXYZ searchPoint(currentPoint[0], currentPoint[1], currentPoint[2]);
+    std::vector<int> pointIdx;
+    std::vector<float> pointRadiusSquaredDistance;
+
+    std::vector<double> radiusForEstimate;
+    std::vector<double> lengthForEstimate;
+
+    double searchRadius = patchHeight / 2 + 1;
+    if(mpCurrent.height - minHeight < patchHeight /2){
+        searchRadius += mpCurrent.height - minHeight;
+    }else if(maxHeight - mpCurrent.height < patchHeight/2){
+        searchRadius += maxHeight - mpCurrent.height;
+    }
+    if ( kdtree.radiusSearch (searchPoint, searchRadius, pointIdx, pointRadiusSquaredDistance) > 0 ){
+        for (unsigned int idx = 0; idx < pointIdx.size (); ++idx){
+            //index of dgtal and pcl is the same
+            unsigned int foundedIndex = pointIdx.at(idx);
+            Z3i::RealPoint found = pointCloud.at(foundedIndex);
+            CylindricalPoint mpFound = myPoints.at(foundedIndex);
+            double angleDiff = std::abs(mpFound.angle - mpCurrent.angle);
+            if(angleDiff > patchAngle/2 && 2*M_PI - angleDiff > patchAngle / 2){
+                continue;
+            }
+            radiusForEstimate.push_back(mpFound.radius);
+            lengthForEstimate.push_back(mpFound.height);
+        }
+    }
+  coefficients[i] = Regression::linearRegression(lengthForEstimate, radiusForEstimate);
+  }
+}
+
+void
+DefectSegmentationUnroll::computeDistances(){
+  for(unsigned int i = 0; i < myPoints.size(); i++){
+      std::pair<double, double> coeffs = coefficients[i];
+      if(coeffs.second == 0.0){
+          distances[i] = 0;
+      }else{
+          double estimateRadii = myPoints[i].height * coeffs.first + coeffs.second;
+          distances[i] = myPoints[i].radius - estimateRadii;
+          //if(distances[i]<0){
+          //   distances[i]=0.0;
+          //}
+          //trace.info()<<"estimation du rayon:  "<<estimateRadii<<std::endl;
+          //trace.info()<<"vrais rayon: "<<myPoints[i].radius<<std::endl;
+          //trace.info()<<"difference: "<<distances[i]<<std::endl;
+      }
+  }
+
+}
 
 
 
@@ -108,14 +201,37 @@ DefectSegmentationUnroll::computeMeasures(){
   minHeight = (*minMaxElem.first).height;
   maxHeight = (*minMaxElem.second).height;
   height=maxHeight-minHeight;
+  //compute difference distance measures
+  
+  maxdiffDist=INT_MIN;
+  mindiffDist=INT_MAX;
+  for(unsigned int i = 0; i < myPoints.size(); i++){
+    if(distances[i]>maxdiffDist){
+      maxdiffDist=distances[i];
+    }
+    if(distances[i]<mindiffDist){
+      mindiffDist=distances[i];
+    }
+    //trace.info()<<distances[i]<<std::endl;
+  }
+  
   //Discretisation of height and circum
   height_div=roundf(height);
   angle_div=roundf(circum);
   trace.info()<<"Dicrestisation : X = "<<angle_div<<" Y = "<<height_div<<std::endl;
+  trace.info()<<"ANGLE : [ "<<minAngle<<" ,  "<<maxAngle<<"]"<<std::endl;
+  trace.info()<<"RADIUS : [ "<<minRadius<<" ,  "<<maxRadius<<"]"<<std::endl;
+  trace.info()<<"HEIGHT : [ "<<minHeight<<" ,  "<<maxHeight<<"]"<<std::endl;
+  trace.info()<<"DISTDIFF : [ "<<mindiffDist<<" ,  "<<maxdiffDist<<"]"<<std::endl;
 }
 
 void
 DefectSegmentationUnroll::unrollSurface() {
+  //preallocate size of unrolledmap
+  unrolled_surface.resize(height_div);
+  for (int i = 0; i < height_div; ++i)
+    unrolled_surface[i].resize(angle_div);
+
   trace.info()<<"Compute Unrolled map..."<<std::endl;
   CylindricalPoint mpCurrent;
   int posAngle, posHeight;
@@ -175,15 +291,23 @@ DefectSegmentationUnroll::computeNormalizedImage() {
   trace.info()<<"start compute normalized image with max resolution : X = "<<angle_div<< " Y = "<<height_div <<std::endl;
   normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
   double moyenneRadius;
+  double moyenneDiffDist;
   double normalizedRadius;
+  double normalizeDiffDist;
   std::vector<unsigned int > temp;
   for(unsigned int i = 0; i < height_div; i++){
     for(unsigned int j = 0; j < angle_div; j++){
+      temp=unrolled_surface[i][j];
       //moyenneRadius=getMaxRadius(unrolled_surface[i][j]);
       moyenneRadius=getMeansRadius(unrolled_surface[i][j]);
+      moyenneDiffDist=getMeansDistDiff(temp);
       //moyenneRadius=getMaxRadius(unrolled_surface[i][j]);
-      normalizedRadius=normalize(moyenneRadius);
-      normalizedMap.at<double>(i, j) = normalizedRadius;
+      //
+      if(!temp.empty()){
+        normalizedRadius=normalizeRadius(moyenneRadius);
+        normalizeDiffDist=normalizeDiffDistance(moyenneDiffDist);
+        normalizedMap.at<double>(i, j) = normalizeDiffDist;  
+      }
     }
   }
 }
@@ -217,7 +341,7 @@ DefectSegmentationUnroll::computeNormalizedImage(int decreaseFactor) {
         //decreaseFactor give in parameter need to be choosen for never have an empty vector in the lower resolution
         assert(!temp.empty());
         radius=getMaxRadius(temp);
-        normalizedRadius=normalize(radius);
+        normalizedRadius=normalizeRadius(radius);
         normalizedMap.at<double>(YNormMap, XNormMap) = normalizedRadius;
       }
     }
@@ -232,10 +356,12 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
   int maxDecreaseHit=0;
   int current_resX,current_resY;
   double moyenneRadius;
+  double moyenneDiffDist;
   int topLeftCornerHeight,topLeftCornerTheta;
 
   normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
   double normalizedRadius;
+  double normalizedDistDiff;
   std::vector<unsigned int > temp;
   
   //loop on all cells of unrolled surface
@@ -259,23 +385,44 @@ DefectSegmentationUnroll::computeNormalizedImageMultiScale() {
             maxDecreaseHit=decreaseHit;
           }
         }
+
         //if t is empty, thats means that even with a multi scale resolution( to 1/(2^5)) we can't find info
         if(!temp.empty()){
           //trace.info()<<temp.size()<<std::endl;
-          moyenneRadius=getMeansRadius(temp);
+          //moyenneRadius=getMeansRadius(temp);
+          moyenneDiffDist=getMeansDistDiff(temp);
+          
+          //trace.info()<<moyenneRadius<<std::endl;
+          //normalizeDiffDistance(moyenneRadius);
           //moyenneRadius=getMaxRadius(t);
           //moyenneRadius=getMedianRadius(t);
-          normalizedRadius=normalize(moyenneRadius);
-          normalizedMap.at<double>(i, j) = normalizedRadius;
+          
+          //normalizedRadius=normalizeDiffDistance(moyenneRadius);
+          //normalizedMap.at<double>(i, j) = normalizedRadius;
         }
+        //normalizedRadius=normalizeRadius(moyenneRadius);
+        normalizedDistDiff=normalizeDiffDistance(moyenneDiffDist);
+        //if(normalizedDistDiff>normalizedRadius){
+        //  normalizedRadius=normalizedDistDiff;
+        //}
+        //trace.info()<<normalizedRadius<<std::endl;
+        normalizedMap.at<double>(i, j) = normalizedDistDiff;
+        //normalizedMap.at<double>(i, j) = normalizedRadius;
+
       }
     }
   }
   //computeNormalizedImage(maxDecreaseHit);
 }
 double 
-DefectSegmentationUnroll::normalize(double value){
+DefectSegmentationUnroll::normalizeRadius(double value){
+  //search min max of distance
   return ((1/(maxRadius-minRadius))*(value-maxRadius))+1;
+}
+
+double 
+DefectSegmentationUnroll::normalizeDiffDistance(double value){
+  return ((1/(maxdiffDist-mindiffDist))*(value-maxdiffDist))+1;
 }
 
 std::vector<unsigned int > 
@@ -298,11 +445,28 @@ DefectSegmentationUnroll::getIndPointsInLowerResolution(unsigned int i,unsigned 
   }
   return outPutInd;
 }
-
+double
+DefectSegmentationUnroll::getMeansDistDiff(std::vector<unsigned int > v) {
+  double moyenneRadius=0.;
+  if(v.size()>0){
+    unsigned int IndP;
+    for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
+      IndP=*it;
+      moyenneRadius+=distances[IndP];
+      //trace.info()<<moyenneRadius<<std::endl;
+    }moyenneRadius
+    /=v.size();
+  }
+  //if(moyenneRadius>10){
+  //  trace.info()<<moyenneRadius<<std::endl;
+  //}
+  
+  return moyenneRadius;
+}
 double
 DefectSegmentationUnroll::getMeansRadius(std::vector<unsigned int > v) {
   double moyenneRadius=0.;
-  if(v.size()>0){
+  if(!v.empty()){
     unsigned int IndP;
     for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
       IndP=*it;
