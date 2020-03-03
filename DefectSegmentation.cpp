@@ -39,8 +39,6 @@ DefectSegmentation::init(){
 
     computeEquations();
     computeDistances();
-    //debug
-    //writeDebugInfo();
 }
 
 void

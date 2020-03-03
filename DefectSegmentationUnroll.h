@@ -51,9 +51,13 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     void createVisuImage(std::string s);
   protected:
    /**
-    return normalized in [0;1] value from a value 
+    return normalized radius in [0;1] 
     **/
-    double normalize(double value);
+    double normalizeRadius(double value);
+    /**
+    return normalized difference of distance (patch distance - distance) in [0;1] value 
+    **/
+    double normalizeDiffDistance(double value);
     /**
     return a vector of Points
     **/
@@ -66,6 +70,10 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     Cylindrical point from segment of centerline
     **/
     std::vector<unsigned int >  getPointfromSegmentId(unsigned int id);
+    /**
+    return the mean of distance difference vector givein parameters
+    **/
+    double getMeansDistDiff(std::vector<unsigned int > v);
     /**
     return the mean (on radius) of vector
     **/
@@ -91,19 +99,18 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
      **/
     void allocateExtra() override;
     /** @TODO
-    Don't need this method
+    Refactor with Van tho'code
      **/
     void computeEquations() override;
-
+    /** Brief 
+    Refactor with Van tho'code
+    **/
+    void computeEquationsMultiThread(int threadId, int nbThread, const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree, double minHeight, double maxHeight);
     /** @TODO
-    Don't need this method
+    Refactor with Van tho'code
      **/
     void computeDistances() override;
 
-    /**
-    find gcd for two number
-    **/
-    int gcd(int a, int b) ;
     //minimal angle on cylindrical coordonate of all points
     double minAngle;
     //maximal angle on cylindrical coordonate of all points 
@@ -118,12 +125,19 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     double maxHeight;
     //Discretisation of height
     int height_div;
+    //maximal difference of distance
+    double maxdiffDist;
+    //minimal difference of distance
+    double mindiffDist;
     //Discretisation of circumference
     int angle_div;
     //image of unrolled
     cv::Mat normalizedMap;
     //unrolled surface representation : each cells contain many points. Order by z and theta
     std::vector < std::vector < std::vector<unsigned int> > > unrolled_surface;
+    //@TODO: refactoring with van Tho' code.
+    //coefficients of regressed lines, one line for each windows a window = some bands consecutives
+    std::vector<std::pair<double, double> > coefficients;
 };
 
 #endif
