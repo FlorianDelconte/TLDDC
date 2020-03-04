@@ -49,6 +49,10 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     create visual image from normalized image
     **/
     void createVisuImage(std::string s);
+    /**
+    create GT image from vector of int (ind of point in groung truth file)
+    **/
+    void createGTImage(std::vector<int>,std::string s);
   protected:
    /**
     return normalized radius in [0;1] 
@@ -71,9 +75,13 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     **/
     std::vector<unsigned int >  getPointfromSegmentId(unsigned int id);
     /**
-    return the mean of distance difference vector givein parameters
+    return the mean of distance difference vector given in parameters
     **/
     double getMeansDistDiff(std::vector<unsigned int > v);
+    /**
+    return the max of distance difference vector given in parameters
+    **/
+    double getMaxDistDiff(std::vector<unsigned int > v);
     /**
     return the mean (on radius) of vector
     **/
@@ -119,6 +127,8 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     double minRadius;
     //maximal radius on cylindrical coordonate of all points 
     double maxRadius;
+    //mean of radius on cylindrical coordonate of all points
+    double meanRadius;
     //minimal height on cylindrical coordonate of all points
     double minHeight;
     //maximal height on cylindrical coordonate of all points

@@ -149,11 +149,19 @@ main(int argc,char **argv)
     std::string outputPrefix = vm["output"].as<std::string>();
     sa.init();
     sa.unrollSurface();
-    sa.computeNormalizedImage();
-    sa.createVisuImage(outputPrefix+".jpg");
+    //sa.computeNormalizedImage();
+    //sa.createVisuImage(outputPrefix+".jpg");
     //sa.createVisuImage(outputPrefix+".jpg");
     //sa.computeNormalizedImage(8);
     sa.computeNormalizedImageMultiScale();
-    sa.createVisuImage(outputPrefix+"_multi_.jpg");     
-
+    sa.createVisuImage(outputPrefix+".jpg");     
+    //GROUNDTRUTH
+    /*size_t lastindex = inputMeshName.find_last_of("."); 
+    std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id"; 
+    trace.info()<<GtFileName<<std::endl;
+    std::vector<int> groundtrueIds;
+    IOHelper::readIntsFromFile(GtFileName, groundtrueIds);
+    sa.createGTImage(groundtrueIds,outputPrefix+"_GT.jpg");*/
 }
+
+
