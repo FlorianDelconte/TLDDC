@@ -1,6 +1,7 @@
 #include "Statistic.h"
 #include <stdlib.h>
 #include <math.h>
+#include <algorithm>
 
 Statistic::Statistic(){
 }
@@ -25,6 +26,18 @@ double Statistic::getMean(const std::vector<double> &v){
     return sum / v.size();
 }
 
-//double Statistic::getMedian(std::vector<double> v){
-//    return 0.0;
-//}
+double Statistic::getMedian(std::vector<double> v){
+    double median=0.0;
+    unsigned int size = v.size();
+    if (size == 0){
+        median=0.;  // Undefined, really.
+    }else{
+        std::sort(v.begin(), v.end());
+        if (size % 2 == 0){
+            median=(v.at(size / 2 - 1) + v.at(size / 2)) / 2;
+        }else{
+            median=v.at(size / 2);
+        }
+    }
+    return median;
+}

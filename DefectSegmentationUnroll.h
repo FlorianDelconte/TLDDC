@@ -91,6 +91,10 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     **/
     double getMaxRadius(std::vector<unsigned int > v);
     /**
+    return the sum of vector
+    **/
+    double getSumDistDiff(std::vector<unsigned int > v);
+    /**
     return the median (on radius) of vector
     **/
     double getMedianRadius(std::vector<unsigned int > v);
@@ -148,6 +152,8 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     //@TODO: refactoring with van Tho' code.
     //coefficients of regressed lines, one line for each windows a window = some bands consecutives
     std::vector<std::pair<double, double> > coefficients;
+    
+    std::vector<double> minPatch;
 };
 
 #endif
