@@ -98,6 +98,7 @@ public:
         }
         double mean = Statistic::getMean(ys);
         double sd = Statistic::standardDeviation(ys, mean);
+        //double mediane = Statistic::standardDeviation(ys);
 ///std::cout<<"bf:"<< xs.size()<< "  "<< mean<< "  "<< sd << std::endl;
         std::vector<double> inXs;
         std::vector<double> inYs;
@@ -122,6 +123,56 @@ public:
 //std::cout<<"ransac:"<<std::endl;
         return ransac(inXs, inYs, 2, 100);
 
+    }
+    static std::pair<double, double> PurgedByMedianlinearRegression(const std::vector<double> &xs, const std::vector<double> &ys){
+        std::pair<double, double> coefficients;
+        size_t N = ys.size();
+        assert(xs.size() == N);
+        //too little infos
+        if( N < MIN_NB_POINTS ){
+            return coefficients;
+        }
+        double mean = Statistic::getMean(ys);
+        double sd = Statistic::standardDeviation(ys, mean);
+        //double mediane = Statistic::standardDeviation(ys);
+///std::cout<<"bf:"<< xs.size()<< "  "<< mean<< "  "<< sd << std::endl;
+        std::vector<double> inXs;
+        std::vector<double> inYs;
+        //filtre sur la moyenne
+        double th = mean + 2*sd;
+        double th2 = mean - 2*sd;
+        for(size_t i = 0; i < N; i++)
+        {
+            if(ys[i] < th)
+            {
+                inXs.push_back(xs[i]);
+                inYs.push_back(ys[i]);
+            }
+        }
+        //filtre by medianne
+        std::vector<double> inXs2;
+        std::vector<double> inYs2;
+        size_t T=inYs.size();
+        double mediane=Statistic::getMedian(inYs);
+        for(size_t i = 0; i < T; i++)
+        {
+            if(inYs[i] < mediane)
+            {
+                inXs2.push_back(inXs[i]);
+                inYs2.push_back(inYs[i]);
+            }
+        }
+        //std::cout<<"medianne : "<< mediane<< std::endl;
+        //std::cout<<"size of vecteur to be regressed :  "<< inYs2.size()<< std::endl;
+//std::cout<<"at:" << inXs.size()<< "  "<< mean<< "  "<< sd << std::endl;
+        if(sd < MAX_SD){
+            return rmse(inXs2, inYs2);
+        //    ransac(inXs2, inYs2, 2, 100);
+            //return robustLinearOls(inXs2, inYs2);
+        }
+
+//std::cout<<"ransac:"<<std::endl;
+        return ransac(inXs2, inYs2, 2, 100);
     }
 
     static std::pair<double, double> ransac(const std::vector<double> xs, std::vector<double> ys, double epsilon, int minNbIter){

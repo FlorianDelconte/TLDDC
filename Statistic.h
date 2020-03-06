@@ -9,7 +9,7 @@ public:
     Statistic();
     static double standardDeviation(const std::vector<double> &v, double mean);
     static double getMean(const std::vector<double> &v);
-//    static double getMedian(std::vector<double> v);
+    static double getMedian(std::vector<double> v);
 };
 
 #endif // STATISTIC_H
