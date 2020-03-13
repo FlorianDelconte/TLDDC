@@ -156,18 +156,30 @@ public:
         double mediane=Statistic::getMedian(inYs);
         for(size_t i = 0; i < T; i++)
         {
-            if(inYs[i] < mediane)
+            if(inYs[i] < mediane   )
             {
                 inXs2.push_back(inXs[i]);
                 inYs2.push_back(inYs[i]);
             }
         }
+        //filtre by medianne
+        /*std::vector<double> inXs3;
+        std::vector<double> inYs3;
+        mediane=Statistic::getMedian(inYs2);
+        for(size_t i = 0; i < T; i++)
+        {
+            if(inYs2[i] < mediane   )
+            {
+                inXs3.push_back(inXs2[i]);
+                inYs3.push_back(inYs2[i]);
+            }
+        }*/
         //std::cout<<"medianne : "<< mediane<< std::endl;
         //std::cout<<"size of vecteur to be regressed :  "<< inYs2.size()<< std::endl;
 //std::cout<<"at:" << inXs.size()<< "  "<< mean<< "  "<< sd << std::endl;
         if(sd < MAX_SD){
             return rmse(inXs2, inYs2);
-        //    ransac(inXs2, inYs2, 2, 100);
+            //ransac(inXs2, inYs2, 2, 100);
             //return robustLinearOls(inXs2, inYs2);
         }
 

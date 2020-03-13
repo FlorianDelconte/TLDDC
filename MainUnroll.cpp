@@ -20,6 +20,7 @@
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/colormaps/HueShadeColorMap.h"
 
+#include "DefectSegmentationUnroll_copy.h"
 #include "DefectSegmentationUnroll.h"
 #include "IOHelper.h"
 #include "Centerline/Centerline.h"
@@ -145,16 +146,19 @@ main(int argc,char **argv)
 
     trace.info()<<"arc:"<<patchWidth<<std::endl;
     trace.info()<<"fiber:"<<centerline.size()<<std::endl;
-    DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     std::string outputPrefix = vm["output"].as<std::string>();
+    DefectSegmentationUnroll_copy sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
-    sa.unrollSurface();
+    sa.getDefect(outputPrefix);
+   
+    //sa.init();
+    //sa.unrollSurface();
     //sa.computeNormalizedImage();
     //sa.createVisuImage(outputPrefix+".jpg");
     //sa.createVisuImage(outputPrefix+".jpg");
-    //sa.computeNormalizedImage(8);
-    sa.computeNormalizedImageMultiScale();
-    sa.createVisuImage(outputPrefix+".jpg");     
+    //sa.computeNormalizedImage(2);
+    //sa.computeNormalizedImageMultiScale();
+    //sa.createVisuImage(outputPrefix+".jpg");     
     //GROUNDTRUTH
     /*size_t lastindex = inputMeshName.find_last_of("."); 
     std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id"; 
