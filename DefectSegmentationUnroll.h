@@ -54,6 +54,10 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     **/
     void createGTImage(std::vector<int>,std::string s);
   protected:
+    /**
+    Compute line coeficient for one id point
+    **/
+    std::pair<double, double> computeEq(unsigned int idPoint,double searchRadius, double patchAngle,const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree);
    /**
     return normalized radius in [0;1] 
     **/
@@ -118,6 +122,7 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     Refactor with Van tho'code
     **/
     void computeEquationsMultiThread(int threadId, int nbThread, const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree, double minHeight, double maxHeight);
+    
     /** @TODO
     Refactor with Van tho'code
      **/

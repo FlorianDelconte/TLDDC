@@ -1,7 +1,10 @@
 #ifndef IO_HELPER_H
 #define IO_HELPER_H
+
 #include <iostream>
 #include <utility>
+
+//#include <opencv2/opencv.hpp>
 
 #include "DGtal/base/Common.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -9,7 +12,9 @@
 #include "DGtal/shapes/Mesh.h"
 
 
+
 using namespace DGtal;
+
 class IOHelper{
 public:
     IOHelper(){
@@ -34,7 +39,8 @@ public:
     static void export2OFF(const Mesh<Z3i::RealPoint> &mesh, std::string fileName);
 
     static void readIntsFromFile(const std::string &fileName, std::vector<int> &rs);
-
+    //not generic!!!!
+    //static void createVisuImage(std::string s,cv::Mat c);
 };
 
 #endif 

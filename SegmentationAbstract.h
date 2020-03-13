@@ -19,6 +19,7 @@
 
 #include "CylindricalPoint.h"
 
+
 using namespace DGtal;
 
 
@@ -141,7 +142,6 @@ class SegmentationAbstract{
         //
         //difference between
         std::vector<double> distances;
-
         //bin width used by Rosin method
         double binWidth;
 

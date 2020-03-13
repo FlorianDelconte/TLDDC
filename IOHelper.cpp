@@ -1,9 +1,14 @@
 #include <iostream>
 #include <fstream>
+
+//#include <opencv2/opencv.hpp>
+
 #include "DGtal/base/Common.h"
 #include "DGtal/helpers/StdDefs.h"
 
+
 #include "IOHelper.h"
+
 
 using namespace DGtal;
 
@@ -70,3 +75,22 @@ void IOHelper::readIntsFromFile(const std::string &fileName, std::vector<int> &r
         getline(infile, str);
     }
 }
+
+/*void IOHelper::createVisuImage(std::string s,cv::Mat c){
+    int grayscaleValue;
+    double normalizedValue;
+    int rows = c.rows;
+    int cols = c.cols;
+    cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
+    cv::Mat reliefPictures(rows, cols, CV_8UC3, cv::Scalar(110, 110, 110));
+
+    for(unsigned int i = 0; i < rows; i++){
+        for(unsigned int j = 0; j < cols; j++){
+            normalizedValue=c.at<double>(i, j);
+            grayscaleValue=((255/1)*(normalizedValue-1))+255;
+            grayscalemap.at<uchar>(i, j) = grayscaleValue;
+        }
+    }
+    cv::applyColorMap(grayscalemap, reliefPictures, cv::COLORMAP_JET);
+    imwrite( "unrollSurfacePictures/"+s, reliefPictures);
+}*/
