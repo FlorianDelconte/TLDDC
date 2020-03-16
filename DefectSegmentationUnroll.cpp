@@ -228,5 +228,5 @@ DefectSegmentationUnroll::createVisuImage(std::string s,cv::Mat c){
         }
     }
     cv::applyColorMap(grayscalemap, reliefPictures, cv::COLORMAP_JET);
-    imwrite( "unrollSurfacePictures/"+s+".jpg", reliefPictures);
+    imwrite( "../unrollSurfaceOutput/"+s+".jpg", reliefPictures);
 }
