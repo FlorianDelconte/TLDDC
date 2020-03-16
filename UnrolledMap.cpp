@@ -197,7 +197,7 @@ UnrolledMap::computeNormalizedImage(int dF) {
                 //[0;angle_div] to [0;resX]
                 XNormMap=j/dF;
                 //get radius in dF resolution
-                relief=medianReliefRepresentation(i,j,dF);
+                relief=meansReliefRepresentation(i,j,dF);
                 //Radius = -1 when cells is empty
                 if(relief!=-1){
                     normalizedRelief=normalizeReliefRepresentation(relief);
@@ -226,7 +226,7 @@ UnrolledMap::computeNormalizedImageMultiScale(){
                 relief=-1;
                 //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
                 while(relief==-1 && dF<32){
-                    relief=medianReliefRepresentation(i,j,dF);
+                    relief=meansReliefRepresentation(i,j,dF);
                     //decrease resolution (1/decreaseHit)
                     dF*=2;
                     //keep the max decrease resolution -> not used for the moment
