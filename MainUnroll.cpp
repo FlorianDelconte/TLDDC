@@ -20,7 +20,6 @@
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/colormaps/HueShadeColorMap.h"
 
-#include "DefectSegmentationUnroll_copy.h"
 #include "DefectSegmentationUnroll.h"
 #include "IOHelper.h"
 #include "Centerline/Centerline.h"
@@ -147,7 +146,7 @@ main(int argc,char **argv)
     trace.info()<<"arc:"<<patchWidth<<std::endl;
     trace.info()<<"fiber:"<<centerline.size()<<std::endl;
     std::string outputPrefix = vm["output"].as<std::string>();
-    DefectSegmentationUnroll_copy sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
+    DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
     sa.getDefect(outputPrefix);
    

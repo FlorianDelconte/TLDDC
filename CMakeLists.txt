@@ -52,7 +52,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 #ADD_EXECUTABLE(segcyl MainCylinder Statistic IOHelper DefectSegmentationCylinder SegmentationAbstract Centerline/Centerline)
 #TARGET_LINK_LIBRARIES(segcyl ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-ADD_EXECUTABLE(segunroll SegmentationAbstract IOHelper MainUnroll Statistic  DefectSegmentationUnroll DefectSegmentationUnroll_copy UnrolledMap SegmentationAbstract  Centerline/Centerline)
+ADD_EXECUTABLE(segunroll SegmentationAbstract IOHelper MainUnroll Statistic  DefectSegmentationUnroll UnrolledMap SegmentationAbstract  Centerline/Centerline)
 TARGET_LINK_LIBRARIES(segunroll  ${OpenCV_LIBS} ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 #ADD_EXECUTABLE(colorizeMesh colorizeMesh IOHelper)

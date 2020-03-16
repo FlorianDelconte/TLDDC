@@ -6,27 +6,22 @@
 #include <opencv2/opencv.hpp>
 
 
-UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::vector<double> DeltaDistance){
+UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::vector<double> rRepresenation){
     trace.info()<<"Construct unrolled map..."<<std::endl;
     //init attribut
     CPoints=CylindricalPoints;
-    DDistance=DeltaDistance;
-    //compute min and max on DDistance
-    maxDeltaDist=INT_MIN;
-    minDeltaDist=INT_MAX;
-    for(unsigned int i = 0; i < DDistance.size(); i++){
-        if(DDistance[i]>maxDeltaDist){
-            maxDeltaDist=DDistance[i];
+    reliefRepresentation=rRepresenation;
+    //compute min and max on DDistance for normalisation
+    maxRelief=INT_MIN;
+    minRelief=INT_MAX;
+    for(unsigned int i = 0; i < reliefRepresentation.size(); i++){
+        if(reliefRepresentation[i]>maxRelief){
+            maxRelief=reliefRepresentation[i];
         }
-        if(DDistance[i]<minDeltaDist){
-            minDeltaDist=DDistance[i];
+        if(reliefRepresentation[i]<minRelief){
+            minRelief=reliefRepresentation[i];
         }
     }
-    //compute min and max radius
-    CylindricalPointOrderRadius RadiusOrder;
-    auto minMaxRadius = std::minmax_element(CPoints.begin(), CPoints.end(), RadiusOrder);
-    minRadius = (*minMaxRadius.first).radius;
-    maxRadius = (*minMaxRadius.second).radius;
     //compute Height discretisation
     CylindricalPointOrder heightOrder;
     auto minMaxHeight = std::minmax_element(CPoints.begin(), CPoints.end(), heightOrder);
@@ -93,6 +88,7 @@ UnrolledMap::detectCellsIn(unsigned int i, unsigned int j){
     }
     return CellsIn;
 }
+
 std::vector<unsigned int > 
 UnrolledMap::getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF){
     std::vector<unsigned int > outPutInd;
@@ -115,51 +111,68 @@ UnrolledMap::getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF)
 }
 
 double
-UnrolledMap::meansRadius(unsigned int i, unsigned int j,int dF){
+UnrolledMap::meansReliefRepresentation(unsigned int i, unsigned int j,int dF){
     assert(dF!=0);
-    double moyenneRadius=0.;
+    double moyenneRelief=0.;
     std::vector<unsigned int> v = getIndPointsInLowerResolution(i,j,dF);
     if(!v.empty()){
         unsigned int IndP;
         for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
             IndP=*it;
-            CylindricalPoint mpCurrent = CPoints.at(IndP);
-            moyenneRadius+=mpCurrent.radius;
+            moyenneRelief+=reliefRepresentation.at(IndP);
         }
-        moyenneRadius/=v.size();
+        moyenneRelief/=v.size();
     }else{
-        moyenneRadius=-1;
+        moyenneRelief=-1;
     }
-    return moyenneRadius;
+    return moyenneRelief;
+}
+double
+UnrolledMap::maxReliefRepresentation(unsigned int i, unsigned int j,int dF){
+    assert(dF!=0);
+    double maxReliefResolution=INT_MIN;
+    double currentRelief;
+    std::vector<unsigned int> v = getIndPointsInLowerResolution(i,j,dF);
+    if(!v.empty()){
+        unsigned int IndP;
+        for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
+            IndP=*it;
+            currentRelief=reliefRepresentation.at(IndP);
+            if(currentRelief>maxReliefResolution){
+                maxReliefResolution=currentRelief;
+            }
+        }
+    }else{
+        maxReliefResolution=-1;
+    }
+    return maxReliefResolution;
 }
 
 double
-UnrolledMap::meansDeltaDist(unsigned int i, unsigned int j,int dF){
+UnrolledMap::medianReliefRepresentation(unsigned int i, unsigned int j,int dF) {
     assert(dF!=0);
-    double moyenneDeltaDist=0.;
+    double medianRelief;
     std::vector<unsigned int> v = getIndPointsInLowerResolution(i,j,dF);
-    if(!v.empty()){
-        unsigned int IndP;
-        for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
-            IndP=*it;
-            moyenneDeltaDist+=DDistance.at(IndP);
+    unsigned int size = v.size();
+    if(size!=0){
+        std::sort(v.begin(), v.end());
+        
+        if (size % 2 == 0){
+            double m1=reliefRepresentation.at(v.at(size / 2 - 1));
+            double m2=reliefRepresentation.at(v.at(size / 2));
+            medianRelief=(m1+m2)/2;
+        }else{
+            medianRelief=reliefRepresentation.at(v.at(size / 2));
         }
-        moyenneDeltaDist/=v.size();
     }else{
-        moyenneDeltaDist=-1;
+        medianRelief=-1;
     }
-    return moyenneDeltaDist;
+    return medianRelief;
 }
 
 double 
-UnrolledMap::normalizeRadius(double value){
-  //search min max of distance
-  return ((1/(maxRadius-minRadius))*(value-maxRadius))+1;
-}
-
-double 
-UnrolledMap::normalizeDeltaDist(double value){
-  return ((1/(maxDeltaDist-minDeltaDist))*(value-maxDeltaDist))+1;
+UnrolledMap::normalizeReliefRepresentation(double value){
+  return ((1/(maxRelief-minRelief))*(value-maxRelief))+1;
 }
 
 cv::Mat
@@ -171,8 +184,8 @@ UnrolledMap::computeNormalizedImage(int dF) {
     trace.info()<<"resolution : Y = "<<resY<<" X = "<<resX<<std::endl;
     //init normalized map with the new resolution
     cv::Mat normalizedMap=cv::Mat::zeros(resY+1,resX+1,CV_32FC4);
-    double radius=0.;
-    double normalizedRadius;
+    double relief=0.;
+    double normalizedRelief;
     int XNormMap,YNormMap;
     //loop on the top left corner of all new cells
     for(unsigned int i = 0; i < height_div; i+=dF){
@@ -184,11 +197,11 @@ UnrolledMap::computeNormalizedImage(int dF) {
                 //[0;angle_div] to [0;resX]
                 XNormMap=j/dF;
                 //get radius in dF resolution
-                radius=meansRadius(i,j,dF);
+                relief=medianReliefRepresentation(i,j,dF);
                 //Radius = -1 when cells is empty
-                if(radius!=-1){
-                    normalizedRadius=normalizeRadius(radius);
-                    normalizedMap.at<double>(YNormMap, XNormMap) = normalizedRadius;
+                if(relief!=-1){
+                    normalizedRelief=normalizeReliefRepresentation(relief);
+                    normalizedMap.at<double>(YNormMap, XNormMap) = normalizedRelief;
                 }
             }
         }
@@ -200,33 +213,29 @@ UnrolledMap::computeNormalizedImage(int dF) {
 cv::Mat
 UnrolledMap::computeNormalizedImageMultiScale(){
     trace.info()<<"start compute normalized image in multi scale ..."<<std::endl;
-    int decreaseHit;
+    int dF;
     int maxDecreaseHit=0;
-    double radius;
+    double relief;
     cv::Mat normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
-    double normalizedRadius;
-    double normalizedDistDiff;  
+    double normalizedRelief;
     //loop on all cells of unrolled surface
     for(unsigned int i = 0; i < height_div; i++){
         for(unsigned int j = 0; j < angle_div; j++){
             if(detectCellsIn(i,j)){
-                decreaseHit=2;
-                radius=-1;
+                dF=2;
+                relief=-1;
                 //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
-                while(radius==-1 && decreaseHit<32){
-                    //get all indice Points of i,j in a lower resolution
-                    radius=meansRadius(i,j,decreaseHit);
-                    //radius=meansDeltaDist(i,j,decreaseHit);
+                while(relief==-1 && dF<32){
+                    relief=medianReliefRepresentation(i,j,dF);
                     //decrease resolution (1/decreaseHit)
-                    decreaseHit*=2;
-                    //keep the max decrease resolution
-                    if(decreaseHit>=maxDecreaseHit){
-                        maxDecreaseHit=decreaseHit;
+                    dF*=2;
+                    //keep the max decrease resolution -> not used for the moment
+                    if(dF>=maxDecreaseHit){
+                        maxDecreaseHit=dF;
                     }
                 }
-                normalizedRadius=normalizeRadius(radius);
-                //normalizedRadius=normalizeDeltaDist(radius);
-                normalizedMap.at<double>(i, j) = normalizedRadius;   
+                normalizedRelief=normalizeReliefRepresentation(relief);
+                normalizedMap.at<double>(i, j) = normalizedRelief;   
             }
         }
     }
