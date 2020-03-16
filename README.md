@@ -8,11 +8,12 @@ This guide is to install the program on linux operation system. This may work fo
 ## Dependencies
 The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed:
 ###### Boost 1.46 or later
-###### DGtal version 0.9 or later. To install DGtal see [DGtal installation] (https://github.com/DGtal-team/DGtal/blob/master/README.md)
+###### DGtal version 0.9. To install DGtal see [DGtal installation] (https://github.com/DGtal-team/DGtal/blob/master/README.md)
 ###### PCL version 1.7 or later
 ###### Eigen3
 ###### GNU GSL 
 ###### CMake 2.6 or later
+###### OPENCV 
 
 ## Install
 ```
@@ -25,38 +26,9 @@ make
 If you want you can also directly test the programm online:
 
 =======
-User can find the example in the Main.cpp that include:
-* Computation of centerline:
-```
-Centerline acc(scaledMesh, accRadius, trackStep, invertNormal);
-std::vector<Z3i::RealPoint> fiber = acc.compute();
-```
-* Interpolation by spline
-```
-std::vector<Z3i::RealPoint> centerline = CenterlineHelper::getSmoothCenterlineBSplines(domain, fiber);
-```
-* Initialize the DefectSegmentation class:
-```
-DefectSegmentation sa(pointCloud, centerline, arcLength, patchHeight);
-sa.init();
-```
-* get the point ids of defect
-```
-std::vector<unsigned int> defects = sa.getDefect();
-```
-* Export the results:
-Now you can use the helper class IOHelper to write the results to files. For example, to write the point ids of defect:
-```
-IOHelper::export2Text(defects, outputPrefix + "-defect.id");
-```
-
 * Run the program
 ```
   ./segmentation -i mesh.off --voxelSize 5 --accRadius \
   100 --trackStep 25 --patchWidth 25 --patchHeight 100 \
   --binWidth 5 --invertNormal true --output prefix
 ```
-
-
-
-[![Build Status](https://travis-ci.org/vanthonguyen/treelogdefectsegmentation.svg?branch=master)](https://travis-ci.org/vanthonguyen/treelogdefectsegmentation)
