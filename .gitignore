@@ -1,2 +1,3 @@
 #ignore the folder called build anywhere, but not files called build
 build/
+unrollSurfaceOutput/*
