@@ -1,3 +1,4 @@
 #ignore the folder called build anywhere, but not files called build
 build/
-unrollSurfaceOutput/*
+unrollSurfaceOutput/*.jpg
+unrollSurfaceOutput/*.JPG
