@@ -134,8 +134,6 @@ public:
         }
         double mean = Statistic::getMean(ys);
         double sd = Statistic::standardDeviation(ys, mean);
-        //double mediane = Statistic::standardDeviation(ys);
-///std::cout<<"bf:"<< xs.size()<< "  "<< mean<< "  "<< sd << std::endl;
         std::vector<double> inXs;
         std::vector<double> inYs;
         //filtre sur la moyenne
