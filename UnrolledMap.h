@@ -13,23 +13,51 @@
 class UnrolledMap{
   public:
     /**
+    Copy constructor
+    **/
+    UnrolledMap();
+    /**
     Constructor.
    **/
     UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints, std::vector<double> DeltaDistance);
+    /**
+    Copy constructor
+    **/
+    UnrolledMap(const UnrolledMap &um);
+    
     /**
     return false if cells is consiedred out of the mesh (function to skip noise in relief image)
     **/
     bool detectCellsIn(unsigned int i, unsigned int j);
     
     /**
-    return image (all values are in [0,1]) of unrolled map. dF is the decrease factor parameter : 1/dF.
-    if df=1 return an image height_div*angle_div
+    compute normalized image (all values are in [0,1]) of unrolled map. dF is the decrease factor parameter : 1/dF.
      **/
-    cv::Mat computeNormalizedImage(int dF);
+    void computeNormalizedImage(int dF);
     /**
-    return a normalized image of unrolled map with the black pixel complete by a multi scale analyse of unrolled map
+    compute normalized image of unrolled map with the black pixel complete by a multi scale analyse of unrolled map
      **/
-    cv::Mat computeNormalizedImageMultiScale();
+    void computeNormalizedImageMultiScale();
+    /**
+    compute rgb image from normalized image
+    **/
+    void computeRGBImage();
+    /**
+    return normalized image
+    **/
+    cv::Mat getNormalizedImage();
+    /**
+    return rgb image 
+    **/
+    cv::Mat getRgbImage();
+    /**
+    return the vector of ind at pos (i,j) in unrolled_surface with the decrease factor specify by df : 1/dF.
+    **/
+    std::vector<unsigned int > getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF);
+    /**
+    return the point in cylindrical coordinate
+    **/
+    CylindricalPoint getCPoint(unsigned int);
   protected:
     //to compute normalization on delta dist
     double minRelief;
@@ -53,11 +81,6 @@ class UnrolledMap{
     if df=1 return the mean at position (i,j) in unrolled surface.
     **/
     double medianReliefRepresentation(unsigned int i, unsigned int j,int dF);
-
-    /**
-    return the vector of ind at pos (i,j) in unrolled_surface with the decrease factor specify by df : 1/dF.
-    **/
-    std::vector<unsigned int > getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF);
     //unrolled surface representation : each cells contain some index points.
     std::vector<std::vector<std::vector<unsigned int>>> unrolled_surface;
     //Represenation of the relief, radius of deltadiff.
@@ -66,6 +89,10 @@ class UnrolledMap{
     std::vector<CylindricalPoint> CPoints;
     //discretisation
     int height_div, angle_div;
+    //normalizedimage
+    cv::Mat normalizedImage;
+    //rgb image
+    cv::Mat rgbImage;
 
 
 };

@@ -15,10 +15,18 @@
 #define MAX_SD 1000
 #define MIN_NB_POINTS 10
 #define EPS 1
+
+struct coefs
+{
+    std::pair<double, double> coefficients;
+    std::vector<unsigned int> ind_p;
+};
+
 class Regression
 {
 public:
     Regression(){}
+
     static std::pair<double, double> robustLinearOls(const std::vector<double> &xs, const std::vector<double> &ys){
         const size_t p = 2; /* linear fit */
         gsl_matrix *X, *cov;
@@ -88,7 +96,7 @@ public:
         return coeffs;
     }
 
-    static std::pair<double, double> linearRegression(const std::vector<double> &xs, const std::vector<double> &ys){
+    /*static std::pair<double, double> linearRegression(const std::vector<double> &xs, const std::vector<double> &ys){
         std::pair<double, double> coefficients;
         size_t N = ys.size();
         assert(xs.size() == N);
@@ -123,26 +131,29 @@ public:
 //std::cout<<"ransac:"<<std::endl;
         return ransac(inXs, inYs, 2, 100);
 
-    }
-    static std::pair<double, double> PurgedByMedianlinearRegression(const std::vector<double> &xs, const std::vector<double> &ys){
-        std::pair<double, double> coefficients;
-        size_t N = ys.size();
+    }*/
+    static struct coefs PurgedByMedianlinearRegression(const std::vector<double> &xs, const std::vector<double> &ys, const std::vector<unsigned int> &indP){
+        struct coefs c;
+        //std::pair<double, double> coefficients;
+        unsigned int  N = ys.size();
         assert(xs.size() == N);
         //too little infos
         if( N < MIN_NB_POINTS ){
-            return coefficients;
+            return c;
         }
         double mean = Statistic::getMean(ys);
         double sd = Statistic::standardDeviation(ys, mean);
         std::vector<double> inXs;
         std::vector<double> inYs;
+        std::vector<unsigned int> indPselect;
         //filtre sur la moyenne
         double th = mean + 2*sd;
         double th2 = mean - 2*sd;
-        for(size_t i = 0; i < N; i++)
+        for(unsigned int  i = 0; i < N; i++)
         {
             if(ys[i] < th)
             {
+                indPselect.push_back(indP.at(i));
                 inXs.push_back(xs[i]);
                 inYs.push_back(ys[i]);
             }
@@ -150,46 +161,33 @@ public:
         //filtre by medianne
         std::vector<double> inXs2;
         std::vector<double> inYs2;
-        size_t T=inYs.size();
+        std::vector<unsigned int> indPselect2;
+        unsigned int T=inYs.size();
         double mediane=Statistic::getMedian(inYs);
-        for(size_t i = 0; i < T; i++)
+        for(unsigned int i = 0; i < T; i++)
         {
             if(inYs[i] < mediane   )
             {
+                indPselect2.push_back(indPselect[i]);
                 inXs2.push_back(inXs[i]);
                 inYs2.push_back(inYs[i]);
             }
         }
-        //filtre by medianne
-        /*std::vector<double> inXs3;
-        std::vector<double> inYs3;
-        mediane=Statistic::getMedian(inYs2);
-        for(size_t i = 0; i < T; i++)
-        {
-            if(inYs2[i] < mediane   )
-            {
-                inXs3.push_back(inXs2[i]);
-                inYs3.push_back(inYs2[i]);
-            }
-        }*/
-        //std::cout<<"medianne : "<< mediane<< std::endl;
-        //std::cout<<"size of vecteur to be regressed :  "<< inYs2.size()<< std::endl;
-//std::cout<<"at:" << inXs.size()<< "  "<< mean<< "  "<< sd << std::endl;
+        c.ind_p=indPselect2;
         if(sd < MAX_SD){
-            return rmse(inXs2, inYs2);
-            //ransac(inXs2, inYs2, 2, 100);
-            //return robustLinearOls(inXs2, inYs2);
+            c.coefficients=rmse(inXs2, inYs2);
+        }else{
+            c.coefficients=ransac(inXs2, inYs2, 2, 100);
         }
-
-//std::cout<<"ransac:"<<std::endl;
-        return ransac(inXs2, inYs2, 2, 100);
+        return c;
     }
 
     static std::pair<double, double> ransac(const std::vector<double> xs, std::vector<double> ys, double epsilon, int minNbIter){
         //use pcl instead of mine?
         std::pair<double, double> coefficients;
+        //struct coefs c;
     srand (time(NULL));
-    std::pair<double, double> coeffsRmse = rmse(xs, ys);
+    std::pair<double, double> coeffrmse = rmse(xs, ys);
 
     int numberOfIteration = std::numeric_limits<int>::max();
     double p = 0.9999;
@@ -214,7 +212,7 @@ public:
         double a = (y1 - y2)/(x1 - x2);
         double b = y1 - a*x1;
 
-        if( std::abs(a - coeffsRmse.first) > 0.5 ){
+        if( std::abs(a - coeffrmse.first) > 0.5 ){
             continue;
         }
         
@@ -263,8 +261,8 @@ public:
     return rmse(inXs, inYs);
 
     }
-    static std::pair<double, double> rmse(const std::vector<double> &xs, const std::vector<double> &ys){
-
+    static std::pair<double, double>  rmse(const std::vector<double> &xs, const std::vector<double> &ys){
+        //struct coefs c;
         std::pair<double, double> coefficients;
         size_t N = xs.size();
 

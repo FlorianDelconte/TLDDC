@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-//#include <opencv2/opencv.hpp>
+
 
 #include "DGtal/base/Common.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -76,7 +76,7 @@ void IOHelper::readIntsFromFile(const std::string &fileName, std::vector<int> &r
     }
 }
 
-/*void IOHelper::createVisuImage(std::string s,cv::Mat c){
+/*void IOHelper::createVisuImage(std::string name,cv::Mat image){
     int grayscaleValue;
     double normalizedValue;
     int rows = c.rows;

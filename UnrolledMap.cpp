@@ -61,6 +61,17 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
     }
 }
 
+UnrolledMap::UnrolledMap(const UnrolledMap &um){
+    minRelief = um.minRelief;
+    maxRelief = um.maxRelief;
+    unrolled_surface=um.unrolled_surface;
+    reliefRepresentation=um.reliefRepresentation;
+    CPoints=um.CPoints;
+    height_div=um.height_div;
+    angle_div=um.angle_div;
+    normalizedImage=um.normalizedImage;
+    rgbImage=um.rgbImage;
+}
 bool 
 UnrolledMap::detectCellsIn(unsigned int i, unsigned int j){
     //A cell is 'in' if we can't reach the top image or the bot image with empty cells
@@ -175,7 +186,7 @@ UnrolledMap::normalizeReliefRepresentation(double value){
   return ((1/(maxRelief-minRelief))*(value-maxRelief))+1;
 }
 
-cv::Mat
+void
 UnrolledMap::computeNormalizedImage(int dF) {
     trace.info()<<"start compute normalized image with decrease factor : 1 / "<<dF<<" ..."<<std::endl;
     //resolution of relief image
@@ -206,11 +217,12 @@ UnrolledMap::computeNormalizedImage(int dF) {
             }
         }
     }
-    return normalizedMap;
+    normalizedImage=normalizedMap;
+    //return normalizedMap;
 }
 
 
-cv::Mat
+void
 UnrolledMap::computeNormalizedImageMultiScale(){
     trace.info()<<"start compute normalized image in multi scale ..."<<std::endl;
     int dF;
@@ -239,5 +251,40 @@ UnrolledMap::computeNormalizedImageMultiScale(){
             }
         }
     }
-    return normalizedMap;
+    normalizedImage=normalizedMap;
+    //return normalizedMap;
+}
+void
+UnrolledMap::computeRGBImage(){
+    int grayscaleValue;
+    double normalizedValue;
+    int rows = normalizedImage.rows;
+    int cols = normalizedImage.cols;
+    cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
+    rgbImage=cv::Mat(rows, cols, CV_8UC3, cv::Scalar(110, 110, 110));
+
+    for(unsigned int i = 0; i < rows; i++){
+        for(unsigned int j = 0; j < cols; j++){
+            normalizedValue=normalizedImage.at<double>(i, j);
+            grayscaleValue=((255/1)*(normalizedValue-1))+255;
+            grayscalemap.at<uchar>(i, j) = grayscaleValue;
+        }
+    }
+    cv::applyColorMap(grayscalemap, rgbImage, cv::COLORMAP_JET);
+}
+
+/**GETTERS**/
+cv::Mat
+UnrolledMap::getNormalizedImage(){
+    return normalizedImage;
+}
+
+cv::Mat
+UnrolledMap::getRgbImage(){
+    return rgbImage;
+}
+
+CylindricalPoint
+UnrolledMap::getCPoint(unsigned int i){
+    return CPoints.at(i);
 }
