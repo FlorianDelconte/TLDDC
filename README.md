@@ -23,12 +23,10 @@ cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
 #User guide
-If you want you can also directly test the programm online:
 
 =======
 * Run the program
 ```
-  ./segmentation -i mesh.off --voxelSize 5 --accRadius \
-  100 --trackStep 25 --patchWidth 25 --patchHeight 100 \
-  --binWidth 5 --invertNormal true --output prefix
+ ./segunroll -i ../examples/WildCherry2.off --voxelSize 5 --accRadius 100 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false --output WC2
+
 ```
