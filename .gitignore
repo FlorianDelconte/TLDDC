@@ -2,3 +2,5 @@
 build/
 unrollSurfaceOutput/*.jpg
 unrollSurfaceOutput/*.JPG
+clickedPatchOutput/*.dat
+clickedPatchOutput/*.png
