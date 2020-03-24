@@ -33,10 +33,6 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
 
   protected:
     /**
-    Write a RGB image
-    **/
-    void createVisuImage(std::string s,cv::Mat c);
-    /**
     Compute line coeficient for one id point
     **/
     std::pair<double, double> computeEq(unsigned int idPoint,double searchRadius, double patchAngle,const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree);
@@ -61,11 +57,18 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
      **/
     std::vector<double> computeRadiusDistances();
     /**
+     * 
+    **/
+    void filtVectorRadiusHeight();
+    /**
     NOT USED, but in SegmentationAbstract
     **/
     void computeDistances() override;
     //coefficients of regressed lines, one line for each windows a window = some bands consecutives
     std::vector<std::pair<double, double> > coefficients;
+    //For each point store the patch for ImageAnalyser
+    std::vector<std::vector<unsigned int>> ind_Patches; 
+
 
 };
 

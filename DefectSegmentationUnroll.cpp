@@ -29,6 +29,7 @@
 #include "IOHelper.h"
 #include "MultiThreadHelper.h"
 #include "UnrolledMap.h"
+#include "ImageAnalyser.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -55,6 +56,7 @@ DefectSegmentationUnroll::init(){
 void
 DefectSegmentationUnroll::allocateExtra(){
   coefficients.resize(pointCloud.size());
+  ind_Patches.resize(pointCloud.size());
 }
 
 void
@@ -95,24 +97,31 @@ DefectSegmentationUnroll::computeEq(unsigned int idPoint,double searchRadius, do
   std::vector<int> pointIdx;
   std::vector<double> radiusForEstimate;
   std::vector<double> lengthForEstimate;
+  std::vector<unsigned int> indForEstimate;
   std::vector<float> pointRadiusSquaredDistance;
   std::pair<double, double> coefficient;
 
   if ( kdtree.radiusSearch (searchPoint, searchRadius, pointIdx, pointRadiusSquaredDistance) > 0 ){
     for (unsigned int idx = 0; idx < pointIdx.size (); ++idx){
       unsigned int foundedIndex = pointIdx.at(idx);
-      Z3i::RealPoint found = pointCloud.at(foundedIndex);
+      
       CylindricalPoint mpFound = myPoints.at(foundedIndex);
       double angleDiff = std::abs(mpFound.angle - mpCurrent.angle);
       if(angleDiff > patchAngle/2 && 2*M_PI - angleDiff > patchAngle / 2){
         continue;
       }
+      //fill the patches vector
+      //patches[idPoint].push_back(foundedIndex);
       radiusForEstimate.push_back(mpFound.radius);
       lengthForEstimate.push_back(mpFound.height);
+      indForEstimate.push_back(foundedIndex);
     }
   }
-  coefficient = Regression::PurgedByMedianlinearRegression(lengthForEstimate, radiusForEstimate);
-  return coefficient;
+
+
+  struct coefs c= Regression::PurgedByMedianlinearRegression(lengthForEstimate, radiusForEstimate, indForEstimate);
+  ind_Patches.at(idPoint)=c.ind_p;
+  return c.coefficients;
 }
 
 
@@ -135,14 +144,14 @@ DefectSegmentationUnroll::computeEquationsMultiThread(int threadId, int nbThread
     CylindricalPoint mpCurrent = myPoints.at(i);
     
     currentCoefficient = computeEq(i,searchRadius,patchAngle,kdtree);
+    coefficients[i]=currentCoefficient;
+    //double estimateRadii = mpCurrent.height * currentCoefficient.first + currentCoefficient.second;
 
-    double estimateRadii = mpCurrent.height * currentCoefficient.first + currentCoefficient.second;
 
-
-    double deltaDist= mpCurrent.radius - estimateRadii;
+    //double deltaDist= mpCurrent.radius - estimateRadii;
     //3 patch research
     //TODO : generalize
-    if(deltaDist<0 ){
+    /*if(deltaDist<0 ){
       currentCoefficient2 = computeEq(i,secondSearchRadius,secondPatchAngle,kdtree);
       double estimateRadii2 = mpCurrent.height * currentCoefficient2.first + currentCoefficient2.second;
       double deltaDist2= mpCurrent.radius - estimateRadii2;
@@ -160,7 +169,7 @@ DefectSegmentationUnroll::computeEquationsMultiThread(int threadId, int nbThread
       }
     }else{
       coefficients[i]=currentCoefficient;
-    }   
+    }*/
   }
 }
 
@@ -196,37 +205,29 @@ DefectSegmentationUnroll::computeRadiusDistances(){
   return rdistance;
 }
 
+
+
 void
 DefectSegmentationUnroll::getDefect(std::string outputFileName){
   //difference between reference distance and distance P
-  //WARNING : this function need to be call after compute coefficients
+  //WARNING : this function need to be call after compute coefficients -> To compute DeltaDistance we need coeficients to be set
   std::vector<double> DeltaDistances=computeDeltaDistances();
-  //Radius of P
+  //Compute vector of radius
   std::vector<double> RadiusDistances=computeRadiusDistances();
+  //Construct Unrolled_map with DeltaDistance or RadiusDistances
   UnrolledMap unrolled_map(myPoints,DeltaDistances);
-  cv::Mat normalizedMap=unrolled_map.computeNormalizedImageMultiScale();
-  createVisuImage(outputFileName,normalizedMap);
+  //compute the normalized image
+  unrolled_map.computeNormalizedImage(1);
+  //compute an rgb image from normalized image
+  unrolled_map.computeRGBImage();
+  //construct image analyser
+  ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints);
+  image_analyser.analyse();
+  
+  //imwrite( "../unrollSurfaceOutput/"+outputFileName+".jpg", unrolled_map.getRgbImage());
+  //unrolled_map.computeNormalizedImageMultiScale();
+  //unrolled_map.computeRGBImage();
+  //imwrite( "../unrollSurfaceOutput/"+outputFileName+"_multi.jpg", unrolled_map.getRgbImage());
 }
 
-//TODO : move to IOHelper
-void 
-DefectSegmentationUnroll::createVisuImage(std::string s,cv::Mat c){
-    int grayscaleValue;
-    double normalizedValue;
-    int rows = c.rows;
-    int cols = c.cols;
-    trace.info()<<rows<<std::endl;
-    trace.info()<<cols<<std::endl;
-    cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
-    cv::Mat reliefPictures(rows, cols, CV_8UC3, cv::Scalar(110, 110, 110));
 
-    for(unsigned int i = 0; i < rows; i++){
-        for(unsigned int j = 0; j < cols; j++){
-            normalizedValue=c.at<double>(i, j);
-            grayscaleValue=((255/1)*(normalizedValue-1))+255;
-            grayscalemap.at<uchar>(i, j) = grayscaleValue;
-        }
-    }
-    cv::applyColorMap(grayscalemap, reliefPictures, cv::COLORMAP_JET);
-    imwrite( "../unrollSurfaceOutput/"+s+".jpg", reliefPictures);
-}

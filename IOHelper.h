@@ -40,7 +40,7 @@ public:
 
     static void readIntsFromFile(const std::string &fileName, std::vector<int> &rs);
     //not generic!!!!
-    //static void createVisuImage(std::string s,cv::Mat c);
+    //static void createVisuImage(std::string name,cv::Mat image);
 };
 
 #endif 
