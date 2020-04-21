@@ -58,6 +58,10 @@ class UnrolledMap{
     return the point in cylindrical coordinate
     **/
     CylindricalPoint getCPoint(unsigned int);
+    /**
+    return ground truth image
+    **/
+    cv::Mat makeGroundTruthImage(std::vector<int> gtId);
   protected:
     //to compute normalization on delta dist
     double minRelief;
@@ -76,6 +80,11 @@ class UnrolledMap{
     if df=1 return the mean at position (i,j) in unrolled surface.
     **/
     double maxReliefRepresentation(unsigned int i, unsigned int j,int dF);
+    /**
+    return the sum of relief representation. You can specify the resolution by dF : 1/dF.
+    if df=1 return the mean at position (i,j) in unrolled surface.
+    **/
+    double sumReliefRepresentation(unsigned int i, unsigned int j,int dF);
     /**
     return the median of relief representation. You can specify the resolution by dF : 1/dF.
     if df=1 return the mean at position (i,j) in unrolled surface.

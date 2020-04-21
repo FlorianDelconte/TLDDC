@@ -10,6 +10,7 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
     trace.info()<<"Construct unrolled map..."<<std::endl;
     //init attribut
     CPoints=CylindricalPoints;
+    
     reliefRepresentation=rRepresenation;
     //compute min and max on DDistance for normalisation
     maxRelief=INT_MIN;
@@ -72,6 +73,43 @@ UnrolledMap::UnrolledMap(const UnrolledMap &um){
     normalizedImage=um.normalizedImage;
     rgbImage=um.rgbImage;
 }
+cv::Mat
+UnrolledMap::makeGroundTruthImage(std::vector<int> gtId){
+    trace.info()<<"create GT file..."<<std::endl;
+    cv::Mat gtImage(height_div,angle_div,CV_8UC1,cv::Scalar(0));
+    //min and max angle
+    CylindricalPointOrderAngle angleOrder;
+    auto minMaxAngle = std::minmax_element(CPoints.begin(), CPoints.end(), angleOrder);
+    double minAngle = (*minMaxAngle.first).angle;
+    double maxAngle = (*minMaxAngle.second).angle;
+    //max and min height
+    CylindricalPointOrder heightOrder;
+    auto minMaxHeight = std::minmax_element(CPoints.begin(), CPoints.end(), heightOrder);
+    double minHeight = (*minMaxHeight.first).height;
+    double maxHeight = (*minMaxHeight.second).height;
+   
+    //make gtImage
+    int posAngle, posHeight, id;
+    CylindricalPoint mpCurrent;
+    for(unsigned int h = 0; h < gtId.size(); h++){
+        id=gtId.at(h);
+        mpCurrent=CPoints.at(id);
+        trace.info()<<"max"<<height_div<<" "<<angle_div<<std::endl;
+        trace.info()<<"coord in maillage "<<mpCurrent.height<<" "<<mpCurrent.angle<<std::endl;
+        //change range [minAngle,maxAngle] to [0,angle_div-1]
+        posAngle=roundf((((angle_div-1)/(maxAngle-minAngle))*(mpCurrent.angle-(maxAngle)))+(angle_div-1));
+        //change range [minHeight,maxHeight] to [0,height_div-1]
+        posHeight=roundf((((height_div-1)/(maxHeight-minHeight))*(mpCurrent.height-maxHeight))+(height_div-1));
+        trace.info()<<"coord in image "<<posHeight<<" "<<posAngle<<std::endl;
+        //add index point to the unrolled_surface
+        gtImage.at<uchar>(posHeight, posAngle) = 255;
+
+        
+    }
+    return gtImage;
+}
+
+
 bool 
 UnrolledMap::detectCellsIn(unsigned int i, unsigned int j){
     //A cell is 'in' if we can't reach the top image or the bot image with empty cells
@@ -119,6 +157,22 @@ UnrolledMap::getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF)
         }
     }
     return outPutInd;
+}
+double
+UnrolledMap::sumReliefRepresentation(unsigned int i, unsigned int j,int dF){
+    assert(dF!=0);
+    double sumRelief=0.;
+    std::vector<unsigned int> v = getIndPointsInLowerResolution(i,j,dF);
+    if(!v.empty()){
+        unsigned int IndP;
+        for(std::vector<unsigned int>::iterator it = std::begin(v); it != std::end(v); ++it) {
+            IndP=*it;
+            sumRelief+=reliefRepresentation.at(IndP);
+        }
+    }else{
+        sumRelief=-1;
+    }
+    return sumRelief;
 }
 
 double
@@ -194,7 +248,7 @@ UnrolledMap::computeNormalizedImage(int dF) {
     unsigned int resY=height_div/dF;
     trace.info()<<"resolution : Y = "<<resY<<" X = "<<resX<<std::endl;
     //init normalized map with the new resolution
-    cv::Mat normalizedMap=cv::Mat::zeros(resY+1,resX+1,CV_32FC4);
+    cv::Mat normalizedMap=cv::Mat::zeros(resY,resX,CV_32FC4);
     double relief=0.;
     double normalizedRelief;
     int XNormMap,YNormMap;
@@ -215,8 +269,10 @@ UnrolledMap::computeNormalizedImage(int dF) {
                     normalizedMap.at<double>(YNormMap, XNormMap) = normalizedRelief;
                 }
             }
+            
         }
     }
+   
     normalizedImage=normalizedMap;
     //return normalizedMap;
 }
@@ -239,6 +295,7 @@ UnrolledMap::computeNormalizedImageMultiScale(){
                 //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
                 while(relief==-1 && dF<32){
                     relief=meansReliefRepresentation(i,j,dF);
+                    
                     //decrease resolution (1/decreaseHit)
                     dF*=2;
                     //keep the max decrease resolution -> not used for the moment
@@ -266,8 +323,10 @@ UnrolledMap::computeRGBImage(){
     for(unsigned int i = 0; i < rows; i++){
         for(unsigned int j = 0; j < cols; j++){
             normalizedValue=normalizedImage.at<double>(i, j);
+            //trace.info()<<"nv : "<<normalizedValue<<std::endl;
             grayscaleValue=((255/1)*(normalizedValue-1))+255;
             grayscalemap.at<uchar>(i, j) = grayscaleValue;
+            //trace.info()<<"gsv : "<<grayscaleValue<<std::endl;
         }
     }
     cv::applyColorMap(grayscalemap, rgbImage, cv::COLORMAP_JET);
