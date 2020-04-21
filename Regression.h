@@ -20,6 +20,7 @@ struct coefs
 {
     std::pair<double, double> coefficients;
     std::vector<unsigned int> ind_p;
+    
 };
 
 class Regression
@@ -132,9 +133,10 @@ public:
         return ransac(inXs, inYs, 2, 100);
 
     }*/
-    static struct coefs PurgedByMedianlinearRegression(const std::vector<double> &xs, const std::vector<double> &ys, const std::vector<unsigned int> &indP){
+    
+    static struct coefs PurgedlinearRegression(const std::vector<double> &xs, const std::vector<double> &ys,const std::vector<double> &zs, const std::vector<unsigned int> &indP){
+        std::pair<double, double> coeff;
         struct coefs c;
-        //std::pair<double, double> coefficients;
         unsigned int  N = ys.size();
         assert(xs.size() == N);
         //too little infos
@@ -159,26 +161,31 @@ public:
             }
         }
         //filtre by medianne
-        std::vector<double> inXs2;
-        std::vector<double> inYs2;
-        std::vector<unsigned int> indPselect2;
-        unsigned int T=inYs.size();
-        double mediane=Statistic::getMedian(inYs);
-        for(unsigned int i = 0; i < T; i++)
-        {
-            if(inYs[i] < mediane   )
-            {
-                indPselect2.push_back(indPselect[i]);
-                inXs2.push_back(inXs[i]);
-                inYs2.push_back(inYs[i]);
-            }
-        }
-        c.ind_p=indPselect2;
+        //std::vector<double> inXs2;
+        //std::vector<double> inYs2;
+        //std::vector<unsigned int> indPselect2;
+        //unsigned int T=inYs.size();
+        //double mediane=Statistic::getMedian(inYs);
+        //for(unsigned int i = 0; i < T; i++)
+        //{
+            //if(inYs[i] < mediane   )
+            //{
+                //indPselect2.push_back(indPselect[i]);
+                //inXs2.push_back(inXs[i]);
+                //inYs2.push_back(inYs[i]);
+            //}
+        //}
+        
         if(sd < MAX_SD){
-            c.coefficients=rmse(inXs2, inYs2);
+            coeff=rmse(inXs, inYs);
         }else{
-            c.coefficients=ransac(inXs2, inYs2, 2, 100);
+            coeff=ransac(inXs, inYs, 2, 100);
         }
+        //uncomment to shift line (on y axis) by median orhto distance
+        shiftLineByMedianDistance(inXs,inYs,coeff);
+        c.ind_p=indPselect;
+        c.coefficients=coeff;
+        
         return c;
     }
 
@@ -284,6 +291,71 @@ public:
         return coefficients;
     }
 private:
+
+    /**
+    shift line by distances between the farest point to the fitted line and fitted line
+    **/
+    static void 
+    shiftLineByMaxDistance(std::vector<double> xs,std::vector<double> ys, std::pair<double, double> &coefs){
+        assert(xs.size()==ys.size());
+        double currentRadius;
+        double currentHeight;
+        double maxdistance;
+        double A,B,C;
+        double distanceLine;
+        //reinit of maxdistance
+        maxdistance=INT_MIN;
+        //fitted line in cartesian form
+        A=coefs.first;
+        B=-1;
+        C=coefs.second;
+        //loop on points in patch
+        for (unsigned int i = 0; i < xs.size (); ++i){
+            currentHeight=xs.at(i);
+            currentRadius=ys.at(i);
+            //check if the current point in patch is below the fitted line
+            if(currentRadius < (coefs.first*currentHeight + coefs.second)){
+                //perpendicular distance
+                distanceLine=abs((A*currentHeight)+(B*currentRadius)+C)/sqrt((A*A)+(B*B));
+                //find the maximum of orthogonal distance
+                if(distanceLine>maxdistance){
+                    maxdistance=distanceLine;
+                }
+            }
+        }
+        coefs.second-=maxdistance;
+    }
+
+    /**
+    shift line by distances between the farest point to the fitted line and fitted line
+    **/
+    static void 
+    shiftLineByMedianDistance(std::vector<double> xs,std::vector<double> ys, std::pair<double, double> &coefs){
+        assert(xs.size()==ys.size());
+        std::vector<double> distanceToLine;
+        double currentRadius;
+        double currentHeight;
+        double maxdistance;
+        double A,B,C;
+        double distanceLine;
+        //reinit of maxdistance
+        maxdistance=INT_MIN;
+        //fitted line in cartesian form
+        A=coefs.first;
+        B=-1;
+        C=coefs.second;
+        //loop on points in patch
+        for (unsigned int i = 0; i < xs.size (); ++i){
+            currentHeight=xs.at(i);
+            currentRadius=ys.at(i);
+            //perpendicular distance
+            distanceLine=abs((A*currentHeight)+(B*currentRadius)+C)/sqrt((A*A)+(B*B));
+            distanceToLine.push_back(distanceLine);
+        }
+        double median = Statistic::getMedian(distanceToLine);
+        coefs.second-=median;
+    }
+
     static int
     dofit(const gsl_multifit_robust_type *T,
           const gsl_matrix *X, const gsl_vector *y,

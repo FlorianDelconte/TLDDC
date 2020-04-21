@@ -29,9 +29,11 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     using SegmentationAbstract::SegmentationAbstract;
 
     void init() override;
-    void getDefect(std::string output);
+    void getDefect(std::string output,std::string gtName);
 
   protected:
+
+
     /**
     Compute line coeficient for one id point
     **/
@@ -51,15 +53,12 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     /** 
     Compute Delta distance for each pôints
      **/
-    std::vector<double> computeDeltaDistances();
+    void computeDeltaDistances();
     /**
     Compute Rayon for each points
      **/
-    std::vector<double> computeRadiusDistances();
-    /**
-     * 
-    **/
-    void filtVectorRadiusHeight();
+    void computeRadiusDistances();
+
     /**
     NOT USED, but in SegmentationAbstract
     **/

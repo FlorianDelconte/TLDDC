@@ -146,25 +146,19 @@ main(int argc,char **argv)
     trace.info()<<"arc:"<<patchWidth<<std::endl;
     trace.info()<<"fiber:"<<centerline.size()<<std::endl;
     std::string outputPrefix = vm["output"].as<std::string>();
+    size_t lastindex = inputMeshName.find_last_of("."); 
+    std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id"; 
+    //trace.info()<<GtFileName<<std::endl;
     DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
-    sa.getDefect(outputPrefix);
-   
-    //sa.init();
-    //sa.unrollSurface();
-    //sa.computeNormalizedImage();
-    //sa.createVisuImage(outputPrefix+".jpg");
-    //sa.createVisuImage(outputPrefix+".jpg");
-    //sa.computeNormalizedImage(2);
-    //sa.computeNormalizedImageMultiScale();
-    //sa.createVisuImage(outputPrefix+".jpg");     
-    //GROUNDTRUTH
-    /*size_t lastindex = inputMeshName.find_last_of("."); 
-    std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id"; 
-    trace.info()<<GtFileName<<std::endl;
-    std::vector<int> groundtrueIds;
-    IOHelper::readIntsFromFile(GtFileName, groundtrueIds);
-    sa.createGTImage(groundtrueIds,outputPrefix+"_GT.jpg");*/
+
+    
+
+    sa.getDefect(outputPrefix,GtFileName);
+    //std::vector<int> groundtrueIds;
+    //IOHelper::readIntsFromFile(GtFileName, groundtrueIds);
+    
+    
 }
 
 
