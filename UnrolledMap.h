@@ -43,13 +43,17 @@ class UnrolledMap{
     **/
     void computeRGBImage();
     /**
+    compute rgb image from normalized image
+    **/
+    void computeGRAYImage();
+    /**
     return normalized image
     **/
     cv::Mat getNormalizedImage();
     /**
     return rgb image 
     **/
-    cv::Mat getRgbImage();
+    cv::Mat getImage();
     /**
     return the vector of ind at pos (i,j) in unrolled_surface with the decrease factor specify by df : 1/dF.
     **/
@@ -101,7 +105,7 @@ class UnrolledMap{
     //normalizedimage
     cv::Mat normalizedImage;
     //rgb image
-    cv::Mat rgbImage;
+    cv::Mat image;
 
 
 };
