@@ -47,15 +47,14 @@ SET(PCLLib ${PCL_SEGMENTATION_LIBRARIES})
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-find_package(Python2 COMPONENTS Development )
-include_directories(segunroll PRIVATE ${Python2_INCLUDE_DIRS})
+#find_package(Python2 COMPONENTS Development )
+#include_directories(segunroll PRIVATE ${Python2_INCLUDE_DIRS})
 
 #ADD_EXECUTABLE(segmentation Main Statistic IOHelper DefectSegmentation SegmentationAbstract Centerline/Centerline)
 #TARGET_LINK_LIBRARIES(segmentation ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 #ADD_EXECUTABLE(segcyl MainCylinder Statistic IOHelper DefectSegmentationCylinder SegmentationAbstract Centerline/Centerline)
 #TARGET_LINK_LIBRARIES(segcyl ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-
 
 ADD_EXECUTABLE(segunroll SegmentationAbstract IOHelper MainUnroll Statistic  DefectSegmentationUnroll UnrolledMap SegmentationAbstract ImageAnalyser Centerline/Centerline)
 TARGET_LINK_LIBRARIES(segunroll  LINK_PUBLIC ${OpenCV_LIBS} ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )

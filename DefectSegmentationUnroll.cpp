@@ -187,13 +187,13 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   //Construct Unrolled_map with a vectorof distance (vector size = point cloud size)
   UnrolledMap unrolled_map(myPoints,distances);
   //compute the normalized image
-  unrolled_map.computeNormalizedImage(1);
-  unrolled_map.computeRGBImage();
-  imwrite( "../unrollSurfaceOutput/"+outputFileName+".jpg", unrolled_map.getRgbImage());
-  //compute an rgb image from normalized image
-  //unrolled_map.computeNormalizedImageMultiScale();
+  //unrolled_map.computeNormalizedImage(1);
   //unrolled_map.computeRGBImage();
-  //imwrite( "../unrollSurfaceOutput/"+outputFileName+"_multi.jpg", unrolled_map.getRgbImage());
+  //imwrite( "../unrollSurfaceOutput/"+outputFileName+".jpg", unrolled_map.getImage());
+  //compute an rgb image from normalized image
+  unrolled_map.computeNormalizedImageMultiScale();
+  unrolled_map.computeGRAYImage();
+  imwrite( "../unrollSurfaceOutput/"+outputFileName+"_multi.jpg", unrolled_map.getImage());
   //uncomment to create groundTruth image
   //std::vector<int> groundtrueIds;
   //IOHelper::readIntsFromFile(gtName, groundtrueIds);
@@ -201,8 +201,8 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   //imwrite( "../unrollSurfaceOutput/"+outputFileName+"_GT.jpg",unrolled_map.makeGroundTruthImage(groundtrueIds));
   
   //Uncomment to analyse relief image
-  ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
-  image_analyser.analyse();
+  //ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
+  //image_analyser.analyse();
   
   
 }

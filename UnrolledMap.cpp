@@ -58,7 +58,7 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
         //change range [minHeight,maxHeight] to [0,height_div-1]
         posHeight=roundf((((height_div-1)/(maxHeight-minHeight))*(mpCurrent.height-maxHeight))+(height_div-1));
         //add index point to the unrolled_surface
-        unrolled_surface[posHeight][posAngle].push_back(i);
+        unrolled_surface[(height_div-posHeight)-1][posAngle].push_back(i);
     }
 }
 
@@ -71,7 +71,7 @@ UnrolledMap::UnrolledMap(const UnrolledMap &um){
     height_div=um.height_div;
     angle_div=um.angle_div;
     normalizedImage=um.normalizedImage;
-    rgbImage=um.rgbImage;
+    image=um.image;
 }
 cv::Mat
 UnrolledMap::makeGroundTruthImage(std::vector<int> gtId){
@@ -318,7 +318,7 @@ UnrolledMap::computeRGBImage(){
     int rows = normalizedImage.rows;
     int cols = normalizedImage.cols;
     cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
-    rgbImage=cv::Mat(rows, cols, CV_8UC3, cv::Scalar(110, 110, 110));
+    image=cv::Mat(rows, cols, CV_8UC3, cv::Scalar(110, 110, 110));
 
     for(unsigned int i = 0; i < rows; i++){
         for(unsigned int j = 0; j < cols; j++){
@@ -329,9 +329,27 @@ UnrolledMap::computeRGBImage(){
             //trace.info()<<"gsv : "<<grayscaleValue<<std::endl;
         }
     }
-    cv::applyColorMap(grayscalemap, rgbImage, cv::COLORMAP_JET);
+    cv::applyColorMap(grayscalemap, image, cv::COLORMAP_JET);
 }
+void
+UnrolledMap::computeGRAYImage(){
+    int grayscaleValue;
+    double normalizedValue;
+    int rows = normalizedImage.rows;
+    int cols = normalizedImage.cols;
+    cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
 
+    for(unsigned int i = 0; i < rows; i++){
+        for(unsigned int j = 0; j < cols; j++){
+            normalizedValue=normalizedImage.at<double>(i, j);
+            //trace.info()<<"nv : "<<normalizedValue<<std::endl;
+            grayscaleValue=((255/1)*(normalizedValue-1))+255;
+            grayscalemap.at<uchar>(i, j) = grayscaleValue;
+            //trace.info()<<"gsv : "<<grayscaleValue<<std::endl;
+        }
+    }
+    image=grayscalemap;
+}
 /**GETTERS**/
 cv::Mat
 UnrolledMap::getNormalizedImage(){
@@ -339,8 +357,8 @@ UnrolledMap::getNormalizedImage(){
 }
 
 cv::Mat
-UnrolledMap::getRgbImage(){
-    return rgbImage;
+UnrolledMap::getImage(){
+    return image;
 }
 
 CylindricalPoint

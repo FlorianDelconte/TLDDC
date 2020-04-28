@@ -44,7 +44,7 @@ ImageAnalyser::onMouse( int event, int x, int y, int flags, void* param)
         //fill  patches.dat files
         for (unsigned int idPatches = 0; idPatches < nbPatches; ++idPatches){
            
-            datafilename="../clickedPatchOutput/patche"+std::to_string(idPatches)+".dat";
+            datafilename="../clickedPatchOutput/    "+std::to_string(idPatches)+".dat";
             dataFile.open(datafilename);
             dataFile<<"#X\tY\n";
             for(std::vector<unsigned int>::iterator it = std::begin(p_ianalyser->ind_Patches[indInCells[idPatches]]); it != std::end(p_ianalyser->ind_Patches[indInCells[idPatches]]); ++it) {
@@ -117,7 +117,7 @@ ImageAnalyser::getShiftedPoint(std::pair<double, double>& coef,std::vector<unsig
 }
 void
 ImageAnalyser::analyse(){
-    cv::Mat image=unrolled_map.getRgbImage();
+    cv::Mat image=unrolled_map.getImage();
     //std::cout<<ind_Patches.at(100).size()<<std::endl;
     cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
     cv::setMouseCallback("Display window", &ImageAnalyser::onMouse,this);
