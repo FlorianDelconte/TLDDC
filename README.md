@@ -1,10 +1,10 @@
-#Introduction
-Source code of the paper ICPR 2016 "Segmentation of defects on log surface from terrestrial Lidar data"
-#Online demo
-You can test the program [online]
-(http://ipol-geometry.loria.fr/~kerautre/ipol_demo/TDD_IPOLDemo/)
-#Installation
-This guide is to install the program on linux operation system. This may work for unix-like operation system like MacOs or BSD, but we did not test. It could be compiled and run in windows operating system, however some additional software should be installed like mingw or MS C++ compiler.
+## Introduction
+This code use a previous work (https://github.com/vanthonguyen/treelogdefectsegmentation). The previous work first compute a centerline from a tree mesh (by accumulation in 3D voxels) then an estimation of the surface radius is done by the studies of rectangular patch around vertices mesh. This allows the computation of delta distance for each vertices. Finally a treshold  (Rosin) is compute to distinguish wich vertices is a part of defect or not. To know more about the previous work, there is an online demo : http://ipol-geometry.loria.fr/~kerautre/ipol_demo/TDD_IPOLDemo/ and there is an article :  ICPR 2016 "Segmentation of defects on log surface from terrestrial Lidar data".
+
+Here, we want to explore an other use of the centerline. The main idea, is using centerline to unroll tree mesh, then work on 2D image with an intensity able to represent defect shape. This image may be usefull to labeling task, segmentation task, and clasification task. 
+
+![alt text](pipeline.png?raw=true "A quoi ça sert ?")
+
 ## Dependencies
 The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed:
 ###### Boost 1.46 or later
