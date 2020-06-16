@@ -20,7 +20,7 @@ struct coefs
 {
     std::pair<double, double> coefficients;
     std::vector<unsigned int> ind_p;
-    
+
 };
 
 class Regression
@@ -97,7 +97,7 @@ public:
         return coeffs;
     }
 
-    /*static std::pair<double, double> linearRegression(const std::vector<double> &xs, const std::vector<double> &ys){
+    static std::pair<double, double> linearRegression(const std::vector<double> &xs, const std::vector<double> &ys){
         std::pair<double, double> coefficients;
         size_t N = ys.size();
         assert(xs.size() == N);
@@ -107,33 +107,33 @@ public:
         }
         double mean = Statistic::getMean(ys);
         double sd = Statistic::standardDeviation(ys, mean);
-        //double mediane = Statistic::standardDeviation(ys);
-///std::cout<<"bf:"<< xs.size()<< "  "<< mean<< "  "<< sd << std::endl;
+
+
         std::vector<double> inXs;
         std::vector<double> inYs;
-        //std::cout<<"sd:"<<sd<<std::endl;
+
         double th = mean + 2*sd;
         double th2 = mean - 2*sd;
         for(size_t i = 0; i < N; i++)
         {
-            //if(data[i][1] < upThreshold)
+
             if(ys[i] < th)
             {
                 inXs.push_back(xs[i]);
                 inYs.push_back(ys[i]);
             }
         }
-//std::cout<<"at:" << inXs.size()<< "  "<< mean<< "  "<< sd << std::endl;
+
         if(sd < MAX_SD){
             return rmse(inXs, inYs);
-            //robustLinearOls(xs, ys);
+
         }
 
-//std::cout<<"ransac:"<<std::endl;
+
         return ransac(inXs, inYs, 2, 100);
 
-    }*/
-    
+    }
+
     static struct coefs PurgedlinearRegression(const std::vector<double> &xs, const std::vector<double> &ys,const std::vector<double> &zs, const std::vector<unsigned int> &indP){
         std::pair<double, double> coeff;
         struct coefs c;
@@ -175,7 +175,7 @@ public:
                 //inYs2.push_back(inYs[i]);
             //}
         //}
-        
+
         if(sd < MAX_SD){
             coeff=rmse(inXs, inYs);
         }else{
@@ -185,7 +185,7 @@ public:
         shiftLineByMedianDistance(inXs,inYs,coeff);
         c.ind_p=indPselect;
         c.coefficients=coeff;
-        
+
         return c;
     }
 
@@ -222,7 +222,7 @@ public:
         if( std::abs(a - coeffrmse.first) > 0.5 ){
             continue;
         }
-        
+
         int nbInliers = 0;
         //calculate the number of inliers
         for (unsigned int i = 0; i < xs.size(); i++)
@@ -295,7 +295,7 @@ private:
     /**
     shift line by distances between the farest point to the fitted line and fitted line
     **/
-    static void 
+    static void
     shiftLineByMaxDistance(std::vector<double> xs,std::vector<double> ys, std::pair<double, double> &coefs){
         assert(xs.size()==ys.size());
         double currentRadius;
@@ -329,7 +329,7 @@ private:
     /**
     shift line by distances between the farest point to the fitted line and fitted line
     **/
-    static void 
+    static void
     shiftLineByMedianDistance(std::vector<double> xs,std::vector<double> ys, std::pair<double, double> &coefs){
         assert(xs.size()==ys.size());
         std::vector<double> distanceToLine;
@@ -361,7 +361,7 @@ private:
           const gsl_matrix *X, const gsl_vector *y,
           gsl_vector *c, gsl_matrix *cov){
         int s;
-        gsl_multifit_robust_workspace * work 
+        gsl_multifit_robust_workspace * work
             = gsl_multifit_robust_alloc (T, X->size1, X->size2);
         //gsl_multifit_robust_maxiter(100000, work);
         //gsl_multifit_robust_tune(4, work);

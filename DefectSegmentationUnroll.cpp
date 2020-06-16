@@ -45,9 +45,9 @@ DefectSegmentationUnroll::init(){
     convertToCcs();
 
     allocateExtra();
-    
+
     computeEquations();
-    
+
 }
 
 
@@ -100,12 +100,12 @@ DefectSegmentationUnroll::computeEq(unsigned int idPoint,double searchRadius, do
   std::vector<double> lengthForEstimate;
   std::vector<unsigned int> indForEstimate;
   std::vector<float> pointRadiusSquaredDistance;
-  
+
 
   if ( kdtree.radiusSearch (searchPoint, searchRadius, pointIdx, pointRadiusSquaredDistance) > 0 ){
     for (unsigned int idx = 0; idx < pointIdx.size (); ++idx){
       unsigned int foundedIndex = pointIdx.at(idx);
-      
+
       CylindricalPoint mpFound = myPoints.at(foundedIndex);
       double angleDiff = std::abs(mpFound.angle - mpCurrent.angle);
       if(angleDiff > patchAngle/2 && 2*M_PI - angleDiff > patchAngle / 2){
@@ -120,7 +120,7 @@ DefectSegmentationUnroll::computeEq(unsigned int idPoint,double searchRadius, do
   }
   struct coefs c= Regression::PurgedlinearRegression(lengthForEstimate, radiusForEstimate, angleForEstimate,indForEstimate);
   std::pair<double, double> coef;
-  
+
   coef=c.coefficients;
   ind_Patches.at(idPoint)=c.ind_p;
   return coef;
@@ -130,11 +130,11 @@ DefectSegmentationUnroll::computeEq(unsigned int idPoint,double searchRadius, do
 void
 DefectSegmentationUnroll::computeEquationsMultiThread(int threadId, int nbThread,const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree, double minH, double maxH){
   std::pair<double, double> currentCoefficient;
-  
+
   double patchAngle = arcLength / radii;
- 
+
   double searchRadius = patchHeight / 2 + 1;
- 
+
   for(unsigned int i = threadId; i < pointCloud.size();i+=nbThread){
     CylindricalPoint mpCurrent = myPoints.at(i);
     currentCoefficient = computeEq(i,searchRadius,patchAngle,kdtree);
@@ -151,7 +151,7 @@ DefectSegmentationUnroll::computeDistances(){
 
 void
 DefectSegmentationUnroll::computeDeltaDistances(){
-  
+
   for(unsigned int i = 0; i < myPoints.size(); i++){
       std::pair<double, double> coeffs = coefficients[i];
       double estimateRadii = myPoints[i].height * coeffs.first + coeffs.second;
@@ -162,22 +162,21 @@ DefectSegmentationUnroll::computeDeltaDistances(){
       }
      //trace.info()<<distances[i]<<std::endl;
   }
-  
-
 }
 
 void
 DefectSegmentationUnroll::computeRadiusDistances(){
-  
-  for(unsigned int i = 0; i < myPoints.size(); i++){  
+
+  for(unsigned int i = 0; i < myPoints.size(); i++){
     distances[i] = myPoints[i].radius;
   }
 
 }
 
 
-void
+std::vector<unsigned int>
 DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtName){
+  std::vector<unsigned int> concatPointInPixels;
   //compute vector of distances like distance=deltadistance
   computeDeltaDistances();
   //Compute vector of distance like distance=radius
@@ -193,18 +192,47 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   //compute an rgb image from normalized image
   unrolled_map.computeNormalizedImageMultiScale();
   unrolled_map.computeGRAYImage();
-  imwrite( "../unrollSurfaceOutput/"+outputFileName+"_multi.jpg", unrolled_map.getImage());
+  imwrite( "../unrollSurfaceOutput/"+outputFileName+".png", unrolled_map.getImage());
+  //uncomment to test drawing mesh
+  /*cv::Mat drawn;
+
+  drawn = cv::imread("../drawingInput/"+outputFileName+".jpg",0);
+  if (drawn.empty())
+  {
+    std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
+  }
+  trace.info()<<"../drawingInput/"<<outputFileName<<".jpg"<<std::endl;
+
+  std::vector<unsigned int>  currentPointsInPixels;
+  unsigned int IndP;
+  int currentIntensity;
+  for (int i=0; i < drawn.rows; ++i){
+    for (int j=0; j < drawn.cols; ++j){
+      currentIntensity=(int)drawn.at<uchar>(i, j);
+      if(currentIntensity>0){
+        currentPointsInPixels=unrolled_map.getPointsUnrolled_surface(i,j);
+
+        for(std::vector<unsigned int>::iterator it = std::begin(currentPointsInPixels); it != std::end(currentPointsInPixels); ++it) {
+          IndP=*it;
+          concatPointInPixels.push_back(IndP);
+        }
+      }
+    }
+  }
+  trace.info()<<concatPointInPixels.size()<<std::endl;*/
+
+
+
   //uncomment to create groundTruth image
-  //std::vector<int> groundtrueIds;
-  //IOHelper::readIntsFromFile(gtName, groundtrueIds);
-  //trace.info()<<groundtrueIds.size()<<std::endl;
-  //imwrite( "../unrollSurfaceOutput/"+outputFileName+"_GT.jpg",unrolled_map.makeGroundTruthImage(groundtrueIds));
-  
+  std::vector<int> groundtrueIds;
+  IOHelper::readIntsFromFile(gtName, groundtrueIds);
+  //@CARE: Need to be call after computeNormalizedImageMultiScale()
+  cv::Mat gtimg=unrolled_map.makeGroundTruthImage(groundtrueIds);
+  imwrite( "../unrollSurfaceOutput/"+outputFileName+"_GT.png",unrolled_map.makeGroundTruthImage(groundtrueIds));
+
   //Uncomment to analyse relief image
-  //ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
-  //image_analyser.analyse();
-  
-  
+  /*ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
+  image_analyser.analyse();*/
+
+  return concatPointInPixels;
 }
-
-

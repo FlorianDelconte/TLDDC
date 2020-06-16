@@ -59,6 +59,10 @@ class UnrolledMap{
     **/
     std::vector<unsigned int > getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF);
     /**
+    return the vector of ind at pos (i,j) in unrolled_surface. Need unrolled_sruface to be build
+    **/
+    std::vector<unsigned int > getPointsUnrolled_surface(unsigned int i,unsigned int j);
+    /**
     return the point in cylindrical coordinate
     **/
     CylindricalPoint getCPoint(unsigned int);
@@ -66,14 +70,22 @@ class UnrolledMap{
     return ground truth image
     **/
     cv::Mat makeGroundTruthImage(std::vector<int> gtId);
+    /**
+    * Crop bot and top of normalizd image
+    **/
+    void cropTopBotImage();
   protected:
     //to compute normalization on delta dist
     double minRelief;
     double maxRelief;
     /**
-     Normalize radius betwen [0,1] with min and max radius
+     Normalize reliefImage betwen [0,1] with min and max reliefREP
      **/
-    double normalizeReliefRepresentation(double value);
+    void normalizeImage();
+    /**
+     Normalize radius betwen [0,1] with -5 and 15 values
+     **/
+    double ownNormalizeReliefRepresentation(double value);
     /**
     return the mean of relief representation. You can specify the resolution by dF : 1/dF.
     if df=1 return the mean at position (i,j) in unrolled surface.
@@ -94,6 +106,8 @@ class UnrolledMap{
     if df=1 return the mean at position (i,j) in unrolled surface.
     **/
     double medianReliefRepresentation(unsigned int i, unsigned int j,int dF);
+
+
     //unrolled surface representation : each cells contain some index points.
     std::vector<std::vector<std::vector<unsigned int>>> unrolled_surface;
     //Represenation of the relief, radius of deltadiff.
@@ -106,7 +120,10 @@ class UnrolledMap{
     cv::Mat normalizedImage;
     //rgb image
     cv::Mat image;
-
+    //the max ind point (different zeros) from top normalized image
+    unsigned int maxIndTop;
+    //the min ind point (different zeros) from bot normalized image
+    unsigned int minIndBot;
 
 };
 #endif
