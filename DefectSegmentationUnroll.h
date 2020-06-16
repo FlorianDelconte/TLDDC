@@ -29,7 +29,9 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     using SegmentationAbstract::SegmentationAbstract;
 
     void init() override;
-    void getDefect(std::string output,std::string gtName);
+    
+    std::vector<unsigned int>
+    getDefect(std::string output,std::string gtName);
 
   protected:
 

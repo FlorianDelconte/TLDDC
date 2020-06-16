@@ -10,7 +10,7 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
     trace.info()<<"Construct unrolled map..."<<std::endl;
     //init attribut
     CPoints=CylindricalPoints;
-    
+
     reliefRepresentation=rRepresenation;
     //compute min and max on DDistance for normalisation
     maxRelief=INT_MIN;
@@ -28,8 +28,8 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
     auto minMaxHeight = std::minmax_element(CPoints.begin(), CPoints.end(), heightOrder);
     double minHeight = (*minMaxHeight.first).height;
     double maxHeight = (*minMaxHeight.second).height;
-    height_div=roundf(maxHeight-minHeight); 
-    //compute angle discretisation 
+    height_div=roundf(maxHeight-minHeight);
+    //compute angle discretisation
     double meanRadius=0.;
     CylindricalPoint mpCurrent;
     for(unsigned int i = 0; i < CPoints.size(); i++){
@@ -58,8 +58,11 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
         //change range [minHeight,maxHeight] to [0,height_div-1]
         posHeight=roundf((((height_div-1)/(maxHeight-minHeight))*(mpCurrent.height-maxHeight))+(height_div-1));
         //add index point to the unrolled_surface
-        unrolled_surface[(height_div-posHeight)-1][posAngle].push_back(i);
+        unrolled_surface[posHeight][posAngle].push_back(i);
     }
+    //init normalizedImage
+    normalizedImage = cv::Mat::zeros(height_div,angle_div,CV_32F);
+  
 }
 
 UnrolledMap::UnrolledMap(const UnrolledMap &um){
@@ -87,34 +90,43 @@ UnrolledMap::makeGroundTruthImage(std::vector<int> gtId){
     auto minMaxHeight = std::minmax_element(CPoints.begin(), CPoints.end(), heightOrder);
     double minHeight = (*minMaxHeight.first).height;
     double maxHeight = (*minMaxHeight.second).height;
-   
+
     //make gtImage
     int posAngle, posHeight, id;
     CylindricalPoint mpCurrent;
     for(unsigned int h = 0; h < gtId.size(); h++){
         id=gtId.at(h);
         mpCurrent=CPoints.at(id);
-        trace.info()<<"max"<<height_div<<" "<<angle_div<<std::endl;
-        trace.info()<<"coord in maillage "<<mpCurrent.height<<" "<<mpCurrent.angle<<std::endl;
+        //trace.info()<<"max"<<height_div<<" "<<angle_div<<std::endl;
+        //trace.info()<<"coord in maillage "<<mpCurrent.height<<" "<<mpCurrent.angle<<std::endl;
         //change range [minAngle,maxAngle] to [0,angle_div-1]
         posAngle=roundf((((angle_div-1)/(maxAngle-minAngle))*(mpCurrent.angle-(maxAngle)))+(angle_div-1));
         //change range [minHeight,maxHeight] to [0,height_div-1]
         posHeight=roundf((((height_div-1)/(maxHeight-minHeight))*(mpCurrent.height-maxHeight))+(height_div-1));
-        trace.info()<<"coord in image "<<posHeight<<" "<<posAngle<<std::endl;
+        //trace.info()<<"coord in image "<<posHeight<<" "<<posAngle<<std::endl;
         //add index point to the unrolled_surface
         gtImage.at<uchar>(posHeight, posAngle) = 255;
-
-        
     }
+
+    //crop bot and top
+    cv::Rect myROI(0, maxIndTop, angle_div, minIndBot-maxIndTop);
+    gtImage = gtImage(myROI);
+    //Aply closing and opening operation
+    int close_size = 2;
+    int open_size = 2;
+    cv::Mat elementClose = cv::getStructuringElement( cv::MORPH_RECT,cv::Size( 2*close_size + 1, 2*close_size+1 ),cv::Point( close_size, close_size ) );
+    cv::Mat elementOpen= cv::getStructuringElement( cv::MORPH_RECT,cv::Size( 2*open_size + 1, 2*open_size+1 ),cv::Point( open_size, open_size ) );
+    cv::morphologyEx( gtImage, gtImage, cv::MORPH_CLOSE , elementClose );
+    cv::morphologyEx( gtImage, gtImage, cv::MORPH_OPEN, elementOpen );
     return gtImage;
 }
 
 
-bool 
+bool
 UnrolledMap::detectCellsIn(unsigned int i, unsigned int j){
     //A cell is 'in' if we can't reach the top image or the bot image with empty cells
     bool CellsIn=true;
-    
+
     std::vector<unsigned int > tempUp = unrolled_surface[i][j];
     std::vector<unsigned int > tempDown = unrolled_surface[i][j];
     //ind for reach the top image
@@ -138,7 +150,7 @@ UnrolledMap::detectCellsIn(unsigned int i, unsigned int j){
     return CellsIn;
 }
 
-std::vector<unsigned int > 
+std::vector<unsigned int >
 UnrolledMap::getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF){
     std::vector<unsigned int > outPutInd;
     int topLeftCornerHeight,topLeftCornerTheta;
@@ -158,6 +170,12 @@ UnrolledMap::getIndPointsInLowerResolution(unsigned int i,unsigned int j,int dF)
     }
     return outPutInd;
 }
+
+std::vector<unsigned int>
+UnrolledMap::getPointsUnrolled_surface(unsigned int i,unsigned int j){
+    return unrolled_surface[i+maxIndTop][j];
+}
+
 double
 UnrolledMap::sumReliefRepresentation(unsigned int i, unsigned int j,int dF){
     assert(dF!=0);
@@ -221,7 +239,7 @@ UnrolledMap::medianReliefRepresentation(unsigned int i, unsigned int j,int dF) {
     unsigned int size = v.size();
     if(size!=0){
         std::sort(v.begin(), v.end());
-        
+
         if (size % 2 == 0){
             double m1=reliefRepresentation.at(v.at(size / 2 - 1));
             double m2=reliefRepresentation.at(v.at(size / 2));
@@ -235,10 +253,39 @@ UnrolledMap::medianReliefRepresentation(unsigned int i, unsigned int j,int dF) {
     return medianRelief;
 }
 
-double 
-UnrolledMap::normalizeReliefRepresentation(double value){
-  return ((1/(maxRelief-minRelief))*(value-maxRelief))+1;
+void
+UnrolledMap::normalizeImage(){
+    int rows = normalizedImage.rows;
+    int cols = normalizedImage.cols;
+    double min, max;
+    float reliefValue;
+    float normalizedValue;
+    cv::minMaxLoc(normalizedImage, &min, &max);
+     for(unsigned int i = 0; i < rows; i++){
+        for(unsigned int j = 0; j < cols; j++){
+            reliefValue=normalizedImage.at<float>(i, j);
+            //trace.info()<<"nv : "<<normalizedValue<<std::endl;
+            normalizedValue=(reliefValue-min)/(max-min);
+            normalizedImage.at<float>(i, j)=normalizedValue;
+            //trace.info()<<"gsv : "<<grayscaleValue<<std::endl;
+        }
+    } 
 }
+double
+UnrolledMap::ownNormalizeReliefRepresentation(double value){
+    int minValue=0;
+    int maxValue=25;
+    if(value>=maxValue){
+        trace.info()<<"true in min"<<std::endl;
+        value=maxValue;
+    }
+    if(value<=minValue){
+         trace.info()<<"true in max"<<std::endl;
+        value=minValue;
+    }
+    return (value-minValue)/(maxValue-minValue);
+}
+
 
 void
 UnrolledMap::computeNormalizedImage(int dF) {
@@ -248,7 +295,6 @@ UnrolledMap::computeNormalizedImage(int dF) {
     unsigned int resY=height_div/dF;
     trace.info()<<"resolution : Y = "<<resY<<" X = "<<resX<<std::endl;
     //init normalized map with the new resolution
-    cv::Mat normalizedMap=cv::Mat::zeros(resY,resX,CV_32FC4);
     double relief=0.;
     double normalizedRelief;
     int XNormMap,YNormMap;
@@ -265,16 +311,14 @@ UnrolledMap::computeNormalizedImage(int dF) {
                 relief=meansReliefRepresentation(i,j,dF);
                 //Radius = -1 when cells is empty
                 if(relief!=-1){
-                    normalizedRelief=normalizeReliefRepresentation(relief);
-                    normalizedMap.at<double>(YNormMap, XNormMap) = normalizedRelief;
+                    normalizedImage.at<float>(YNormMap, XNormMap) = normalizedRelief;       
                 }
             }
-            
+
         }
     }
-   
-    normalizedImage=normalizedMap;
-    //return normalizedMap;
+    cropTopBotImage();
+    normalizeImage();
 }
 
 
@@ -284,7 +328,6 @@ UnrolledMap::computeNormalizedImageMultiScale(){
     int dF;
     int maxDecreaseHit=0;
     double relief;
-    cv::Mat normalizedMap=cv::Mat::zeros(height_div,angle_div,CV_32FC4);
     double normalizedRelief;
     //loop on all cells of unrolled surface
     for(unsigned int i = 0; i < height_div; i++){
@@ -294,8 +337,7 @@ UnrolledMap::computeNormalizedImageMultiScale(){
                 relief=-1;
                 //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
                 while(relief==-1 && dF<32){
-                    relief=meansReliefRepresentation(i,j,dF);
-                    
+                    relief=maxReliefRepresentation(i,j,dF);
                     //decrease resolution (1/decreaseHit)
                     dF*=2;
                     //keep the max decrease resolution -> not used for the moment
@@ -303,14 +345,66 @@ UnrolledMap::computeNormalizedImageMultiScale(){
                         maxDecreaseHit=dF;
                     }
                 }
-                normalizedRelief=normalizeReliefRepresentation(relief);
-                normalizedMap.at<double>(i, j) = normalizedRelief;   
+                normalizedImage.at<float>(i, j) = relief;
             }
         }
     }
-    normalizedImage=normalizedMap;
-    //return normalizedMap;
+    cropTopBotImage();
+    normalizeImage();
+   
+    
 }
+
+//@TODO: Est ce qu'il ne vaut pas mieux crop la carte de relief ??
+void
+UnrolledMap::cropTopBotImage(){
+    int rows = normalizedImage.rows;
+    int cols = normalizedImage.cols;
+    double currentPixelValue;
+    unsigned int i,j;
+    //Search the max ind point (different zeros) from top normalized image
+    unsigned int maxIT=0;
+    for(j = 0; j < cols; j++){
+        //trace.info()<<"------"<<std::endl;
+        currentPixelValue=normalizedImage.at<float>(0, j);
+        i=0;
+        while (currentPixelValue==0) {
+            i=i+1;
+            currentPixelValue=normalizedImage.at<float>(i, j);
+            //trace.info()<<currentPixelValue<<std::endl;
+        }
+        if(i>maxIT){
+            maxIT=i;
+        }
+    }
+    //@HERE
+    maxIndTop=maxIT;
+    trace.info()<<maxIndTop<<std::endl;
+    //Search the min ind point (different zeros) from bot normalized image
+    unsigned int minIB=height_div-1;
+    trace.info()<<height_div<<std::endl;
+    for(j = 0; j < cols; j++){
+        //trace.info()<<"------"<<std::endl;
+        currentPixelValue=normalizedImage.at<float>(height_div-1, j);
+        i=height_div-1;
+        while (currentPixelValue==0) {
+            i=i-1;
+            currentPixelValue=normalizedImage.at<float>(i, j);
+            //trace.info()<<currentPixelValue<<std::endl;
+        }
+        if(i<minIB){
+            minIB=i;
+        }
+    }
+    minIndBot=minIB;
+    //@HERE
+    trace.info()<<minIndBot<<std::endl;
+    //crop top and bot
+    cv::Rect myROI(0, maxIndTop, cols, minIndBot-maxIndTop);
+    normalizedImage = normalizedImage(myROI);
+    trace.info()<<minIndBot<<std::endl;
+}
+
 void
 UnrolledMap::computeRGBImage(){
     int grayscaleValue;
@@ -322,7 +416,7 @@ UnrolledMap::computeRGBImage(){
 
     for(unsigned int i = 0; i < rows; i++){
         for(unsigned int j = 0; j < cols; j++){
-            normalizedValue=normalizedImage.at<double>(i, j);
+            normalizedValue=normalizedImage.at<float>(i, j);
             //trace.info()<<"nv : "<<normalizedValue<<std::endl;
             grayscaleValue=((255/1)*(normalizedValue-1))+255;
             grayscalemap.at<uchar>(i, j) = grayscaleValue;
@@ -333,23 +427,30 @@ UnrolledMap::computeRGBImage(){
 }
 void
 UnrolledMap::computeGRAYImage(){
+    //posHeight=roundf((((height_div-1)/(maxHeight-minHeight))*(mpCurrent.height-maxHeight))+(height_div-1));
     int grayscaleValue;
     double normalizedValue;
     int rows = normalizedImage.rows;
     int cols = normalizedImage.cols;
     cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
-
+    double min, max;
+    cv::minMaxLoc(normalizedImage, &min, &max);
+    trace.info()<<"min normalized image:"<<min<<std::endl;
+    trace.info()<<"max normalized image:"<<max<<std::endl;
     for(unsigned int i = 0; i < rows; i++){
         for(unsigned int j = 0; j < cols; j++){
-            normalizedValue=normalizedImage.at<double>(i, j);
-            //trace.info()<<"nv : "<<normalizedValue<<std::endl;
+            normalizedValue=normalizedImage.at<float>(i, j);
             grayscaleValue=((255/1)*(normalizedValue-1))+255;
             grayscalemap.at<uchar>(i, j) = grayscaleValue;
-            //trace.info()<<"gsv : "<<grayscaleValue<<std::endl;
         }
     }
+    double mingm, maxgm;
+    cv::minMaxLoc(grayscalemap, &mingm, &maxgm);
+    trace.info()<<"min gray map:"<<mingm<<std::endl;
+    trace.info()<<"max gray map:"<<maxgm<<std::endl;
     image=grayscalemap;
 }
+
 /**GETTERS**/
 cv::Mat
 UnrolledMap::getNormalizedImage(){

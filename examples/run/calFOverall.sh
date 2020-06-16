@@ -11,6 +11,7 @@
 iFile=$1
 oFile=$2
 
+
 if [ ! -f "$iFile" ] ; then
     echo "input file !"
     exit 0

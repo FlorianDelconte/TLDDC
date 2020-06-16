@@ -22,7 +22,6 @@ cd build
 cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
-#User guide
 
 =======
 * Run the program

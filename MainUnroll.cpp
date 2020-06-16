@@ -146,19 +146,45 @@ main(int argc,char **argv)
     trace.info()<<"arc:"<<patchWidth<<std::endl;
     trace.info()<<"fiber:"<<centerline.size()<<std::endl;
     std::string outputPrefix = vm["output"].as<std::string>();
-    size_t lastindex = inputMeshName.find_last_of("."); 
-    std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id"; 
-    //trace.info()<<GtFileName<<std::endl;
+    size_t lastindex = inputMeshName.find_last_of(".");
+    std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id";
+
+
     DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
+    std::vector<unsigned int> defects=sa.getDefect(outputPrefix,GtFileName);
 
-    
 
-    sa.getDefect(outputPrefix,GtFileName);
-    //std::vector<int> groundtrueIds;
-    //IOHelper::readIntsFromFile(GtFileName, groundtrueIds);
-    
-    
+
+    /*DGtal::Mesh<Z3i::RealPoint> errorMesh = oriMesh;
+
+    std::vector<bool> defectFlags(pointCloud.size(), false);
+    for(unsigned int i = 0; i< defects.size(); i++){
+        defectFlags[defects.at(i)] = true;
+    }
+
+
+    //color defect mesh
+    for (unsigned int i = 0; i < oriMesh.nbFaces(); i++){
+        Face aFace = oriMesh.getFace(i);
+        unsigned int c = 0;
+        for (unsigned int k = 0; k < aFace.size(); k++){
+            //trace.info()<<aFace.at(k)<<std::endl;
+            if(defectFlags.at(aFace.at(k))){
+                c++;
+            }
+        }
+        if(c >= 1){
+            oriMesh.setFaceColor(i, DGtal::Color::Green);
+        }
+    }
+    //write output mesh
+    std::string defectFile = outputPrefix + "-defect.off";
+    IOHelper::export2OFF(oriMesh,defectFile);
+    //write defect id
+    IOHelper::export2Text(defects, outputPrefix + "-defect.id");*/
+
+
+
+
 }
-
-
