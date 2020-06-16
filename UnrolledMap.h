@@ -79,9 +79,9 @@ class UnrolledMap{
     double minRelief;
     double maxRelief;
     /**
-     Normalize reliefImage betwen [0,1] with min and max reliefREP
+     Normalize reliefImage betwen [0,255] with min and max reliefREP
      **/
-    void normalizeImage();
+    cv::Mat toGrayscaleImageMinMax();
     /**
      Normalize radius betwen [0,1] with -5 and 15 values
      **/
@@ -117,7 +117,7 @@ class UnrolledMap{
     //discretisation
     int height_div, angle_div;
     //normalizedimage
-    cv::Mat normalizedImage;
+    cv::Mat reliefImage;
     //rgb image
     cv::Mat image;
     //the max ind point (different zeros) from top normalized image
