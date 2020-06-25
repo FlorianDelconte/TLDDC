@@ -160,7 +160,7 @@ DefectSegmentationUnroll::computeDeltaDistances(){
       }else{
           distances[i] = myPoints[i].radius - estimateRadii;
       }
-     //trace.info()<<distances[i]<<std::endl;
+
   }
 }
 
@@ -194,14 +194,14 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   unrolled_map.computeGRAYImage();
   imwrite( "../unrollSurfaceOutput/"+outputFileName+".png", unrolled_map.getImage());
   //uncomment to test drawing mesh
-  /*cv::Mat drawn;
+  cv::Mat drawn;
 
-  drawn = cv::imread("../drawingInput/"+outputFileName+".jpg",0);
+  drawn = cv::imread("../../drawingInput/"+outputFileName+".png",0);
   if (drawn.empty())
   {
     std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
   }
-  trace.info()<<"../drawingInput/"<<outputFileName<<".jpg"<<std::endl;
+  trace.info()<<"../../drawingInput/"<<outputFileName<<".png"<<std::endl;
 
   std::vector<unsigned int>  currentPointsInPixels;
   unsigned int IndP;
@@ -219,7 +219,7 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
       }
     }
   }
-  trace.info()<<concatPointInPixels.size()<<std::endl;*/
+  trace.info()<<concatPointInPixels.size()<<std::endl;
 
 
 
@@ -231,8 +231,8 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   imwrite( "../unrollSurfaceOutput/"+outputFileName+"_GT.png",unrolled_map.makeGroundTruthImage(groundtrueIds));
 
   //Uncomment to analyse relief image
-  /*ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
-  image_analyser.analyse();*/
+  //ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
+  //image_analyser.analyse();
 
   return concatPointInPixels;
 }

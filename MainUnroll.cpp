@@ -156,7 +156,7 @@ main(int argc,char **argv)
 
 
 
-    /*DGtal::Mesh<Z3i::RealPoint> errorMesh = oriMesh;
+    DGtal::Mesh<Z3i::RealPoint> errorMesh = oriMesh;
 
     std::vector<bool> defectFlags(pointCloud.size(), false);
     for(unsigned int i = 0; i< defects.size(); i++){
@@ -182,7 +182,7 @@ main(int argc,char **argv)
     std::string defectFile = outputPrefix + "-defect.off";
     IOHelper::export2OFF(oriMesh,defectFile);
     //write defect id
-    IOHelper::export2Text(defects, outputPrefix + "-defect.id");*/
+    IOHelper::export2Text(defects, outputPrefix + "-defect.id");
 
 
 

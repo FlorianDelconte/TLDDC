@@ -79,13 +79,13 @@ class UnrolledMap{
     double minRelief;
     double maxRelief;
     /**
-     Normalize reliefImage betwen [0,255] with min and max reliefREP
+     transforme reliefImage betwen [0,255] with min and max reliefREP
      **/
     cv::Mat toGrayscaleImageMinMax();
     /**
-     Normalize radius betwen [0,1] with -5 and 15 values
+     Normalize reliefImage betwen [0,255] with a fixed start and padding
      **/
-    double ownNormalizeReliefRepresentation(double value);
+    cv::Mat toGrayscaleImageFixed(int intensityPerCm,double reliefValueforZero);
     /**
     return the mean of relief representation. You can specify the resolution by dF : 1/dF.
     if df=1 return the mean at position (i,j) in unrolled surface.

@@ -62,7 +62,7 @@ UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::ve
     }
     //init reliefImage
     reliefImage = cv::Mat::zeros(height_div,angle_div,CV_32F);
-  
+
 }
 
 UnrolledMap::UnrolledMap(const UnrolledMap &um){
@@ -255,7 +255,7 @@ UnrolledMap::medianReliefRepresentation(unsigned int i, unsigned int j,int dF) {
 
 cv::Mat
 UnrolledMap::toGrayscaleImageMinMax(){
-    int grayscaleValue;
+    double grayscaleValue;
     double reliefValue;
     int rows = reliefImage.rows;
     int cols = reliefImage.cols;
@@ -268,7 +268,7 @@ UnrolledMap::toGrayscaleImageMinMax(){
         for(unsigned int j = 0; j < cols; j++){
             reliefValue=reliefImage.at<float>(i, j);
             grayscaleValue=((reliefValue-min)/(max-min))*255;
-            grayscalemap.at<uchar>(i, j) = grayscaleValue;
+            grayscalemap.at<uchar>(i, j) = roundf(grayscaleValue);
         }
     }
     double mingm, maxgm;
@@ -277,19 +277,46 @@ UnrolledMap::toGrayscaleImageMinMax(){
     trace.info()<<"max gray map:"<<maxgm<<std::endl;
     return grayscalemap;
 }
-double
-UnrolledMap::ownNormalizeReliefRepresentation(double value){
-    int minValue=0;
-    int maxValue=25;
-    if(value>=maxValue){
-        trace.info()<<"true in min"<<std::endl;
-        value=maxValue;
+
+cv::Mat
+UnrolledMap::toGrayscaleImageFixed(int intensityPerCm, double reliefValueforZero){
+    int grayscaleValue;
+    double reliefValue;
+    int rows = reliefImage.rows;
+    int cols = reliefImage.cols;
+    cv::Mat grayscalemap(rows,cols,CV_8UC1,cv::Scalar(0));
+    //padding intensity (0.x cm = 1 / intensityPerCm)
+    float pad=1./intensityPerCm;
+    double ming=reliefValueforZero;
+    double maxg=(255*pad)+reliefValueforZero;
+    double min, max;
+    cv::minMaxLoc(reliefImage, &min, &max);
+    trace.info()<<"min relief image:"<<min<<std::endl;
+    trace.info()<<"max relief image:"<<max<<std::endl;
+    trace.info()<<"fixed min gray value:"<<ming<<std::endl;
+    trace.info()<<"fixed max gray value:"<<maxg<<std::endl;
+
+    for(unsigned int i = 0; i < rows; i++){
+        for(unsigned int j = 0; j < cols; j++){
+            reliefValue=reliefImage.at<float>(i, j);
+            grayscaleValue=((reliefValue-ming)/(maxg-ming))*255;
+            if(grayscaleValue<0){
+                grayscaleValue=0;
+            }
+            if(grayscaleValue>255){
+                grayscaleValue=255;
+            }
+            grayscalemap.at<uchar>(i, j) = grayscaleValue;
+        }
     }
-    if(value<=minValue){
-         trace.info()<<"true in max"<<std::endl;
-        value=minValue;
-    }
-    return (value-minValue)/(maxValue-minValue);
+    double mingm, maxgm;
+    cv::minMaxLoc(grayscalemap, &mingm, &maxgm);
+    trace.info()<<"min gray map:"<<mingm<<std::endl;
+    trace.info()<<"max gray map:"<<maxgm<<std::endl;
+
+
+
+    return grayscalemap;
 }
 
 
@@ -317,7 +344,7 @@ UnrolledMap::computeNormalizedImage(int dF) {
                 relief=meansReliefRepresentation(i,j,dF);
                 //Radius = -1 when cells is empty
                 if(relief!=-1){
-                    reliefImage.at<float>(YNormMap, XNormMap) = normalizedRelief;       
+                    reliefImage.at<float>(YNormMap, XNormMap) = normalizedRelief;
                 }
             }
 
@@ -343,7 +370,7 @@ UnrolledMap::computeNormalizedImageMultiScale(){
                 relief=-1;
                 //while this ector is empty find a little resolution where the corresponding i,j cells is not empty
                 while(relief==-1 && dF<32){
-                    relief=maxReliefRepresentation(i,j,dF);
+                    relief=meansReliefRepresentation(i,j,dF);
                     //decrease resolution (1/decreaseHit)
                     dF*=2;
                     //keep the max decrease resolution -> not used for the moment
@@ -357,8 +384,8 @@ UnrolledMap::computeNormalizedImageMultiScale(){
     }
     cropTopBotImage();
     //normalizeImage();
-   
-    
+
+
 }
 
 //@TODO: Est ce qu'il ne vaut pas mieux crop la carte de relief ??
@@ -417,7 +444,8 @@ UnrolledMap::computeRGBImage(){
 }
 void
 UnrolledMap::computeGRAYImage(){
-    image=toGrayscaleImageMinMax();
+    //image=toGrayscaleImageMinMax();
+    image=toGrayscaleImageFixed(10,-5);
 }
 
 /**GETTERS**/

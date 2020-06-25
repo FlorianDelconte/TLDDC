@@ -5,3 +5,4 @@ unrollSurfaceOutput/*.JPG
 clickedPatchOutput/*.dat
 clickedPatchOutput/*.png
 examples/*.off
+examples/*.id
