@@ -147,9 +147,10 @@ main(int argc,char **argv)
     trace.info()<<"fiber:"<<centerline.size()<<std::endl;
     std::string outputPrefix = vm["output"].as<std::string>();
     size_t lastindex = inputMeshName.find_last_of(".");
+
     std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id";
 
-
+    std::cout <<"taille du nuage de poinrt : "<< pointCloud.size()<< std::endl;
     DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
     std::vector<unsigned int> defects=sa.getDefect(outputPrefix,GtFileName);
@@ -163,7 +164,7 @@ main(int argc,char **argv)
         defectFlags[defects.at(i)] = true;
     }
 
-
+    std::vector<unsigned int> facesToDelete;
     //color defect mesh
     for (unsigned int i = 0; i < oriMesh.nbFaces(); i++){
         Face aFace = oriMesh.getFace(i);
@@ -174,8 +175,9 @@ main(int argc,char **argv)
                 c++;
             }
         }
-        if(c >= 1){
+        if(c >=  aFace.size()){
             oriMesh.setFaceColor(i, DGtal::Color::Green);
+            facesToDelete.push_back(i);
         }
     }
     //write output mesh
@@ -183,7 +185,7 @@ main(int argc,char **argv)
     IOHelper::export2OFF(oriMesh,defectFile);
     //write defect id
     IOHelper::export2Text(defects, outputPrefix + "-defect.id");
-
+    IOHelper::export2Text(facesToDelete, outputPrefix + "-def-faces.id");
 
 
 

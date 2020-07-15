@@ -24,12 +24,12 @@ class UnrolledMap{
     Copy constructor
     **/
     UnrolledMap(const UnrolledMap &um);
-    
+
     /**
     return false if cells is consiedred out of the mesh (function to skip noise in relief image)
     **/
     bool detectCellsIn(unsigned int i, unsigned int j);
-    
+
     /**
     compute normalized image (all values are in [0,1]) of unrolled map. dF is the decrease factor parameter : 1/dF.
      **/
@@ -51,7 +51,7 @@ class UnrolledMap{
     **/
     cv::Mat getNormalizedImage();
     /**
-    return rgb image 
+    return rgb image
     **/
     cv::Mat getImage();
     /**
@@ -87,6 +87,10 @@ class UnrolledMap{
      **/
     cv::Mat toGrayscaleImageFixed(int intensityPerCm,double reliefValueforZero);
     /**
+    return the mean representant at a spevcify position in discretisation
+    **/
+    //double getMeanRepresentantAt(unsigned int i,unsigned int j);
+    /**
     return the mean of relief representation. You can specify the resolution by dF : 1/dF.
     if df=1 return the mean at position (i,j) in unrolled surface.
     **/
@@ -96,6 +100,7 @@ class UnrolledMap{
     if df=1 return the mean at position (i,j) in unrolled surface.
     **/
     double maxReliefRepresentation(unsigned int i, unsigned int j,int dF);
+    //double maxReliefRepresentationv2(unsigned int i, unsigned int j,int dF);
     /**
     return the sum of relief representation. You can specify the resolution by dF : 1/dF.
     if df=1 return the mean at position (i,j) in unrolled surface.
