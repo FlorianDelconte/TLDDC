@@ -341,21 +341,19 @@ std::vector<Z3i::RealPoint>
 Centerline::compute(){
     Z3i::Point maxAccPoint = accumulate();
     std::vector<Z3i::RealPoint> vectFiber = trackCenterline(maxAccPoint);
-
-    trace.info()<<"size fiber :"<<vectFiber.size()<<std::endl;
     std::vector<Z3i::RealPoint> optiFiber = optimizeElasticForces(vectFiber, 0.000001);
-    trace.info()<<"size fiber :"<<optiFiber.size()<<std::endl;
     //write centerline
     Mesh<Z3i::RealPoint> transMesh = mesh;
     for(unsigned int i =0; i< transMesh.nbFaces(); i++){
         transMesh.setFaceColor(i, DGtal::Color(120, 120 ,120, 180));
     }
-    /*uncomment to test centerline and effect of optimisation*/
-    Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, vectFiber, 5, 0.1, DGtal::Color::Blue);
-    Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, optiFiber, 5, 0.1, DGtal::Color::Red);
+    /*uncomment to test centerline and effect of optimisation
+    Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, vectFiber, 1, 0.1, DGtal::Color::Blue);
+    Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, optiFiber, 1, 0.1, DGtal::Color::Red);
     IOHelper::export2Text(vectFiber, "vectFiber.xyz");
     IOHelper::export2Text(optiFiber, "optiFiber.xyz");
     IOHelper::export2OFF(transMesh, "debugCen.off");
+    */
 
     return optiFiber;
 }

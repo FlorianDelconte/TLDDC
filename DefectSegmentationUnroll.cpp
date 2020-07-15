@@ -33,6 +33,7 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <Python.h>
 using namespace DGtal;
 
 
@@ -186,13 +187,18 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   //Construct Unrolled_map with a vectorof distance (vector size = point cloud size)
   UnrolledMap unrolled_map(myPoints,distances);
   //compute the normalized image
-  //unrolled_map.computeNormalizedImage(1);
-  //unrolled_map.computeRGBImage();
-  //imwrite( "../unrollSurfaceOutput/"+outputFileName+".jpg", unrolled_map.getImage());
+  /*unrolled_map.computeNormalizedImage(1);
+  unrolled_map.computeRGBImage();
+  imwrite( "../../unrollSurfaceOutput/"+outputFileName+"RGB.png", unrolled_map.getImage());
+  //unrolled_map.computeGRAYImage();*/
+  //imwrite( "../../unrollSurfaceOutput/"+outputFileName+"GRAY.png", unrolled_map.getImage());
   //compute an rgb image from normalized image
   unrolled_map.computeNormalizedImageMultiScale();
-  unrolled_map.computeGRAYImage();
-  imwrite( "../unrollSurfaceOutput/"+outputFileName+".png", unrolled_map.getImage());
+  unrolled_map.computeRGBImage();
+  imwrite( "../../unrollSurfaceOutput/"+outputFileName+"RGBmulti.png", unrolled_map.getImage());
+  std::cout << "../../unrollSurfaceOutput/"+outputFileName+".png"<< std::endl;
+  //std::cout << "size :"<<unrolled_map.getImage().size()<< std::endl;
+
   //uncomment to test drawing mesh
   cv::Mat drawn;
 
@@ -224,11 +230,11 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
 
 
   //uncomment to create groundTruth image
-  std::vector<int> groundtrueIds;
+  /*std::vector<int> groundtrueIds;
   IOHelper::readIntsFromFile(gtName, groundtrueIds);
-  //@CARE: Need to be call after computeNormalizedImageMultiScale()
+  std::cout << gtName<< std::endl;
   cv::Mat gtimg=unrolled_map.makeGroundTruthImage(groundtrueIds);
-  imwrite( "../unrollSurfaceOutput/"+outputFileName+"_GT.png",unrolled_map.makeGroundTruthImage(groundtrueIds));
+  imwrite( "../../unrollSurfaceOutput/"+outputFileName+"_GT.png",unrolled_map.makeGroundTruthImage(groundtrueIds));*/
 
   //Uncomment to analyse relief image
   //ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
