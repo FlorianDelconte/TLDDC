@@ -10,6 +10,7 @@
 #allPointFile=$1
 detectedPointsFile=$1
 gtPointsFile=$2
+overall=$3
 
 if [ ! -f "$detectedPointsFile" ] ; then
     echo "input detected index not found!"
@@ -40,7 +41,7 @@ TP=`wc -l <tpIndex`
 FN=$(( nbGT-TP ))
 FP=$(( nbDT-TP ))
 
-echo $TP $FN $FP $nbDT $nbGT >>overall
+echo $TP $FN $FP $nbDT $nbGT >>$overall
 #precision
 Pre=`echo "scale=3;$TP/$nbDT"|bc`
 #Recall
@@ -50,9 +51,8 @@ Rec=`echo "scale=3;$TP/$nbGT"|bc`
 #F measure
 Fme=`echo "scale=3;2*($Pre*$Rec)/($Pre+$Rec)"|bc`
 
-#echo "Precision= " $Pre 
+#echo "Precision= " $Pre
 #echo "Recall= " $Rec
 #echo "F Measure= " $Fme
 
 echo -n  "&" 0$Pre" & 0"$Rec "& " 0$Fme #"\\\\"
-

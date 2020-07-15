@@ -1,14 +1,16 @@
 # !/bin/sh
-#astuce: d'abordles100 puis les 150 puis le 120 ()
 #parameters
 binWidth=0.01
 accRadius=200
 voxelSize=5
 trackStep=20
 
+
 #output file
 rs=results.tex
-
+overallVT=overall_van-tho
+overallCyl=overall_Cylindrical
+overallOur=overall_our
 if [[ "$1" = "reset" ]]
 then
     rm -f *-def-faces.id
@@ -23,6 +25,12 @@ fi
 
 #empty result latex file
 echo -n > $rs
+#empty overal for vt method
+echo -n > $overallVT
+#empty overal for cyl method
+echo -n > $overallCyl
+#empty overall for our method
+echo -n > $overallOur
 
 for log in ../*off
 do
@@ -40,9 +48,13 @@ do
     # for cylindrical method
     outputCylPrefix=$logName"Cyl"
     defectCylPoints=$outputCylPrefix"-defect.id"
+    associateFileCyl=$outputCylPrefix"-asso.off"
+    defectFaceIdsCyl=$outputCylPrefix"-def-faces.id"
     # for unroll method
     outputUnrollPrefix=$logName"Unroll"
     defectUnrollPoints=$outputUnrollPrefix"-defect.id"
+    associateFileUnroll=$outputUnrollPrefix"-asso.off"
+    defectFaceIdsUnroll=$outputUnrollPrefix"-def-faces.id"
 
     if [[ ! -f $defectFaceIds ]]
     then
@@ -56,40 +68,55 @@ do
     then
         # cylindrical fitting method
         echo "../../build/segcyl -i $log --voxelSize $voxelSize --accRadius $accRadius --trackStep $trackStep \
-            --binWidth $binWidth --invertNormal --output  $outputCylPrefix"
+          --binWidth $binWidth --invertNormal --output  $outputCylPrefix"
         ../../build/segcyl -i $log --voxelSize $voxelSize --accRadius $accRadius --trackStep $trackStep \
         --binWidth $binWidth --invertNormal --output  $outputCylPrefix
     fi
 
-      #if [[ ! -f $defectUnrollPoints ]]
-      #then
-          # cylindrical fitting method
-      #    echo "../../build/segunroll -i $log --voxelSize $voxelSize --accRadius $accRadius --trackStep $trackStep \
-      #        --binWidth $binWidth --invertNormal --output  $outputUnrollPrefix"
-      #    ../../build/segunroll -i $log --voxelSize $voxelSize --accRadius $accRadius --trackStep $trackStep \
-      #    --binWidth $binWidth --invertNormal --output  $outputUnrollPrefix
-      #fi
+    if [[ ! -f $defectUnrollPoints ]]
+    then
+        # cylindrical fitting method
+        echo "../../build/segunroll -i $log --voxelSize $voxelSize --accRadius $accRadius --trackStep $trackStep \
+              --binWidth $binWidth --invertNormal --output  $outputUnrollPrefix"
+        ../../build/segunroll -i $log --voxelSize $voxelSize --accRadius $accRadius --trackStep $trackStep \
+        --binWidth $binWidth --invertNormal --output  $outputUnrollPrefix
+    fi
 
     #associate color of detected defects and ground truth
     #Yellow = defects ^ ground truth
     #Green = defects - ground truth
     #Red = ground truth - defects
+
     if [[ ! -f $associateFile ]]
     then
         echo "../../build/colorizeMesh -i $log -r $groundtruth -t $defectFaceIds -o $associateFile"
         ../../build/colorizeMesh -i $log -r $groundtruth -t $defectFaceIds -o $associateFile
     fi
 
+    if [[ ! -f $associateFileCyl ]]
+    then
+        echo "../../build/colorizeMesh -i $log -r $groundtruth -t $defectFaceIdsCyl -o $associateFileCyl"
+        ../../build/colorizeMesh -i $log -r $groundtruth -t $defectFaceIdsCyl -o $associateFileCyl
+    fi
+
+    if [[ ! -f $associateFileUnroll ]]
+    then
+        echo "../../build/colorizeMesh -i $log -r $groundtruth -t $defectFaceIdsUnroll -o $associateFileUnroll"
+        ../../build/colorizeMesh -i $log -r $groundtruth -t $defectFaceIdsUnroll -o $associateFileUnroll
+    fi
+
     #write to latex file
     echo -n $logName >>$rs
-    sh ./calF.sh $defectPoints $groundtruthPoints >> $rs
+    sh ./calF.sh $defectPoints $groundtruthPoints $overallVT>> $rs
     echo -n "&">>$rs
-    sh ./calF.sh $defectCylPoints $groundtruthPoints >> $rs
+    sh ./calF.sh $defectCylPoints $groundtruthPoints $overallCyl >> $rs
     echo -n "&">>$rs
-    #sh ./calF.sh $defectUnrollPoints $groundtruthPoints >> $rs
+    sh ./calF.sh $defectUnrollPoints $groundtruthPoints $overallOur>> $rs
     echo "\\\\">> $rs
 
 done
 
 # write overall to tex file
-#sh ./calFOverall.sh overall $rs
+sh ./calFOverall.sh $overallVT $rs >> $rs
+sh ./calFOverall.sh $overallCyl $rs >> $rs
+sh ./calFOverall.sh $overallOur $rs >> $rs
