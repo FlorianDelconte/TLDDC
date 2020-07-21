@@ -32,15 +32,15 @@ public:
 
     static void export2Text(const std::vector<DGtal::Z3i::RealPoint> &v, const std::string &filename);
     static void export2Text(const std::vector<std::pair<double, double> > &v, const std::string &filename);
-    static void export2Text(const std::vector<DGtal::Z3i::RealPoint> &pointCloud, 
+    static void export2Text(const std::vector<DGtal::Z3i::RealPoint> &pointCloud,
             const std::vector<unsigned int> &indices, const std::string &filename);
     static void readDistanceFromFile(const std::string &fileName, std::vector<double> &vectDistances);
     //not generic!!!!
     static void export2OFF(const Mesh<Z3i::RealPoint> &mesh, std::string fileName);
-
+    static void export2OBJ(const Mesh<Z3i::RealPoint> &mesh, std::string fileName);
     static void readIntsFromFile(const std::string &fileName, std::vector<int> &rs);
     //not generic!!!!
     //static void createVisuImage(std::string name,cv::Mat image);
 };
 
-#endif 
+#endif
