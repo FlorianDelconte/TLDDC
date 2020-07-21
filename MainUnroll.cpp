@@ -52,6 +52,7 @@ main(int argc,char **argv)
         ("patchWidth,a", po::value<double>()->default_value(25), "Arc length/ width of patch")
         ("patchHeight,e", po::value<int>()->default_value(100), "Height of patch")
         ("voxelSize", po::value<int>()->default_value(1), "Voxel size")
+        ("drawing,d", po::value<bool>()->default_value(false), "segmentation true : read binary image from drawingInput/")
         ("output,o", po::value<std::string>()->default_value("output"), "output prefix: output-defect.off, output-def-faces-ids, ...");
 
     bool parseOK=true;
@@ -136,7 +137,7 @@ main(int argc,char **argv)
     Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, fiber, 1, 0.1, DGtal::Color::Blue);
     Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, centerline, 1, 0.1, DGtal::Color::Red);
 
-    IOHelper::export2OFF(transMesh, "centerline.off");
+    //IOHelper::export2OFF(transMesh, "centerline.off");
 
 
     double patchWidth = vm["patchWidth"].as<double>();
@@ -151,41 +152,49 @@ main(int argc,char **argv)
     std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id";
 
     std::cout <<"taille du nuage de poinrt : "<< pointCloud.size()<< std::endl;
+
+    bool segmentationCB = vm["drawing"].as<bool>();
     DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
-    std::vector<unsigned int> defects=sa.getDefect(outputPrefix,GtFileName);
+    std::vector<unsigned int> defects=sa.getDefect(outputPrefix,GtFileName,segmentationCB);
 
 
+    //Comeback on the mesh
+    if(segmentationCB){
+      DGtal::Mesh<Z3i::RealPoint> errorMesh = oriMesh;
 
-    DGtal::Mesh<Z3i::RealPoint> errorMesh = oriMesh;
+      std::vector<bool> defectFlags(pointCloud.size(), false);
+      for(unsigned int i = 0; i< defects.size(); i++){
+          defectFlags[defects.at(i)] = true;
+      }
 
-    std::vector<bool> defectFlags(pointCloud.size(), false);
-    for(unsigned int i = 0; i< defects.size(); i++){
-        defectFlags[defects.at(i)] = true;
+      std::vector<unsigned int> facesToDelete;
+      //color defect mesh
+      for (unsigned int i = 0; i < oriMesh.nbFaces(); i++){
+          Face aFace = oriMesh.getFace(i);
+          unsigned int c = 0;
+          for (unsigned int k = 0; k < aFace.size(); k++){
+              //trace.info()<<aFace.at(k)<<std::endl;
+              if(defectFlags.at(aFace.at(k))){
+                  c++;
+              }
+          }
+          if(c >=  aFace.size()){
+              oriMesh.setFaceColor(i, DGtal::Color::Green);
+              facesToDelete.push_back(i);
+          }
+
+      }
+      std::string defectFile = outputPrefix + "-defect.off";
+      ///std::string defectFileobj = outputPrefix + "-defect.obj";
+      IOHelper::export2OFF(oriMesh,"../output/MESH_output/"+defectFile);
+      //IOHelper::export2OBJ(oriMesh,"../output/MESH_output/"+defectFileobj);
+      //write output mesh
+      //write defect id
+      //IOHelper::export2Text(defects, "../output/MESH_output/"+outputPrefix + "-defect.id");
+      //IOHelper::export2Text(facesToDelete, "../output/MESH_output/"+outputPrefix + "-def-faces.id");
     }
 
-    std::vector<unsigned int> facesToDelete;
-    //color defect mesh
-    for (unsigned int i = 0; i < oriMesh.nbFaces(); i++){
-        Face aFace = oriMesh.getFace(i);
-        unsigned int c = 0;
-        for (unsigned int k = 0; k < aFace.size(); k++){
-            //trace.info()<<aFace.at(k)<<std::endl;
-            if(defectFlags.at(aFace.at(k))){
-                c++;
-            }
-        }
-        if(c >=  aFace.size()){
-            oriMesh.setFaceColor(i, DGtal::Color::Green);
-            facesToDelete.push_back(i);
-        }
-    }
-    //write output mesh
-    std::string defectFile = outputPrefix + "-defect.off";
-    IOHelper::export2OFF(oriMesh,defectFile);
-    //write defect id
-    IOHelper::export2Text(defects, outputPrefix + "-defect.id");
-    IOHelper::export2Text(facesToDelete, outputPrefix + "-def-faces.id");
 
 
 

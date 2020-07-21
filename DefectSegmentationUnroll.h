@@ -29,9 +29,9 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     using SegmentationAbstract::SegmentationAbstract;
 
     void init() override;
-    
+
     std::vector<unsigned int>
-    getDefect(std::string output,std::string gtName);
+    getDefect(std::string output,std::string gtName,bool readSegmentation );
 
   protected:
 
@@ -48,11 +48,11 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     Refactor with Van tho'code
      **/
     void computeEquations() override;
-    /** Brief 
+    /** Brief
     Refactor with Van tho'code
     **/
     void computeEquationsMultiThread(int threadId, int nbThread, const pcl::KdTreeFLANN<pcl::PointXYZ> &kdtree, double minHeight, double maxHeight);
-    /** 
+    /**
     Compute Delta distance for each pôints
      **/
     void computeDeltaDistances();
@@ -68,7 +68,7 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
     //coefficients of regressed lines, one line for each windows a window = some bands consecutives
     std::vector<std::pair<double, double> > coefficients;
     //For each point store the patch for ImageAnalyser
-    std::vector<std::vector<unsigned int>> ind_Patches; 
+    std::vector<std::vector<unsigned int>> ind_Patches;
 
 
 };

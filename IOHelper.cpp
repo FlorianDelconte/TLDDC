@@ -22,7 +22,7 @@ void IOHelper::export2Text(const std::vector<DGtal::Z3i::RealPoint> &v, const st
     outStream.close();
 }
 
-void IOHelper::export2Text(const std::vector<DGtal::Z3i::RealPoint> &pointCloud, 
+void IOHelper::export2Text(const std::vector<DGtal::Z3i::RealPoint> &pointCloud,
         const std::vector<unsigned int> &indices, const std::string &filename){
     std::ofstream outStream;
     outStream.open(filename.c_str(), std::ofstream::out);
@@ -62,6 +62,11 @@ void IOHelper::export2OFF(const Mesh<Z3i::RealPoint> &mesh, std::string fileName
     offMesh.close();
 }
 
+void IOHelper::export2OBJ(const Mesh<Z3i::RealPoint> &mesh, std::string fileName){
+    std::ofstream offMesh (fileName.c_str());
+    DGtal::MeshWriter<Z3i::RealPoint>::export2OBJ(offMesh, mesh);
+    offMesh.close();
+}
 
 void IOHelper::readIntsFromFile(const std::string &fileName, std::vector<int> &rs){
     std::ifstream infile;

@@ -176,7 +176,7 @@ DefectSegmentationUnroll::computeRadiusDistances(){
 
 
 std::vector<unsigned int>
-DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtName){
+DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtName, bool readSegmentation ){
   std::vector<unsigned int> concatPointInPixels;
   //compute vector of distances like distance=deltadistance
   computeDeltaDistances();
@@ -194,38 +194,40 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   //imwrite( "../../unrollSurfaceOutput/"+outputFileName+"GRAY.png", unrolled_map.getImage());
   //compute an rgb image from normalized image
   unrolled_map.computeNormalizedImageMultiScale();
-  unrolled_map.computeRGBImage();
-  imwrite( "../../unrollSurfaceOutput/"+outputFileName+"RGBmulti.png", unrolled_map.getImage());
-  std::cout << "../../unrollSurfaceOutput/"+outputFileName+".png"<< std::endl;
+  unrolled_map.computeGRAYImage();
+  imwrite( "../output/RM_output/"+outputFileName+".png", unrolled_map.getImage());
+  std::cout << "../output/RM_output/"+outputFileName+".png"<< std::endl;
   //std::cout << "size :"<<unrolled_map.getImage().size()<< std::endl;
 
   //uncomment to test drawing mesh
-  cv::Mat drawn;
+  if(readSegmentation){
+    cv::Mat drawn;
 
-  drawn = cv::imread("../../drawingInput/"+outputFileName+".png",0);
-  if (drawn.empty())
-  {
-    std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
-  }
-  trace.info()<<"../../drawingInput/"<<outputFileName<<".png"<<std::endl;
+    drawn = cv::imread("../input/SEG_input/"+outputFileName+"SEG.png",0);
+    if (drawn.empty())
+    {
+      std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
+    }
+    trace.info()<<"../input/SEG_input/"<<outputFileName<<"SEG.png"<<std::endl;
 
-  std::vector<unsigned int>  currentPointsInPixels;
-  unsigned int IndP;
-  int currentIntensity;
-  for (int i=0; i < drawn.rows; ++i){
-    for (int j=0; j < drawn.cols; ++j){
-      currentIntensity=(int)drawn.at<uchar>(i, j);
-      if(currentIntensity>0){
-        currentPointsInPixels=unrolled_map.getPointsUnrolled_surface(i,j);
+    std::vector<unsigned int>  currentPointsInPixels;
+    unsigned int IndP;
+    int currentIntensity;
+    for (int i=0; i < drawn.rows; ++i){
+      for (int j=0; j < drawn.cols; ++j){
+        currentIntensity=(int)drawn.at<uchar>(i, j);
+        if(currentIntensity>0){
+          currentPointsInPixels=unrolled_map.getPointsUnrolled_surface(i,j);
 
-        for(std::vector<unsigned int>::iterator it = std::begin(currentPointsInPixels); it != std::end(currentPointsInPixels); ++it) {
-          IndP=*it;
-          concatPointInPixels.push_back(IndP);
+          for(std::vector<unsigned int>::iterator it = std::begin(currentPointsInPixels); it != std::end(currentPointsInPixels); ++it) {
+            IndP=*it;
+            concatPointInPixels.push_back(IndP);
+          }
         }
       }
     }
+    trace.info()<<concatPointInPixels.size()<<std::endl;
   }
-  trace.info()<<concatPointInPixels.size()<<std::endl;
 
 
 
