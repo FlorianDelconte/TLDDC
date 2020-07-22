@@ -1,7 +1,7 @@
-## Introduction
-This code use a previous work (https://github.com/vanthonguyen/treelogdefectsegmentation). The previous work first compute a centerline from a tree mesh (by accumulation in 3D voxels) then an estimation of the surface radius is done by the studies of rectangular patch around vertices mesh. This allows the computation of delta distance for each vertices. Finally a treshold  (Rosin) is compute to distinguish wich vertices is a part of defect or not. To know more about the previous work, there is an online demo : http://ipol-geometry.loria.fr/~kerautre/ipol_demo/TDD_IPOLDemo/ and there is an article :  ICPR 2016 "Segmentation of defects on log surface from terrestrial Lidar data".
+## TLDDC
+<!--This code use a previous work (https://github.com/vanthonguyen/treelogdefectsegmentation). The previous work first compute a centerline from a tree mesh (by accumulation in 3D voxels) then an estimation of the surface radius is done by the studies of rectangular patch around vertices mesh. This allows the computation of delta distance for each vertices. Finally a treshold  (Rosin) is compute to distinguish wich vertices is a part of defect or not. To know more about the previous work, there is an online demo : http://ipol-geometry.loria.fr/~kerautre/ipol_demo/TDD_IPOLDemo/ and there is an article :  ICPR 2016 "Segmentation of defects on log surface from terrestrial Lidar data".
 
-Here, we want to explore an other use of the centerline. The main idea, is using centerline to unroll tree mesh, then work on 2D image with an intensity able to represent defect shape. This image may be usefull to labeling task, segmentation task, and clasification task. 
+Here, we want to explore an other use of the centerline. The main idea, is using centerline to unroll tree mesh, then work on 2D image with an intensity able to represent defect shape. This image may be usefull to labeling task, segmentation task, and clasification task. -->
 
 ![alt text](pipeline.png?raw=true "A quoi ça sert ?")
 
@@ -11,9 +11,9 @@ The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or late
 ###### DGtal version 0.9. To install DGtal see [DGtal installation] (https://github.com/DGtal-team/DGtal/blob/master/README.md)
 ###### PCL version 1.7 or later
 ###### Eigen3
-###### GNU GSL 
+###### GNU GSL
 ###### CMake 2.6 or later
-###### OPENCV 
+###### OPENCV
 
 ## Install
 ```
