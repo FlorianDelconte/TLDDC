@@ -4,11 +4,11 @@
 Here, we want to explore an other use of the centerline. The main idea, is using centerline to unroll tree mesh, then work on 2D image with an intensity able to represent defect shape. This image may be usefull to labeling task, segmentation task, and clasification task. -->
 Repository of work submitted to ICPR 2020:
 
-Tree Defect Segmentation usingGeometric Features and CNN
-
+**Tree Defect Segmentation usingGeometric Features and CNN**
 
 the run of the methods can be done without any installation with this online demonstration [here](http://kerautret.github.io/TLDDC)
 
+Roughly speaking, we first unroll the mesh thanks to the center line log. Then, we compute defect segmentation with an CNN. Below, there is an illustration of the pipeline of the project.  
 ![alt text](pipeline.png?raw=true "A quoi ça sert ?")
 
 ## Dependencies
