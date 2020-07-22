@@ -28,7 +28,7 @@ FIND_PACKAGE(GSL REQUIRED)
 INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS})
 LINK_DIRECTORIES(${GSL_LIBRARIES})
 
-find_package(PCL 1.8.1 REQUIRED COMPONENTS common segmentation)
+find_package(PCL 1.8.1 REQUIRED COMPONENTS common segmentation segunroll)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
