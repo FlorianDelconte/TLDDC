@@ -195,20 +195,20 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   //compute an rgb image from normalized image
   unrolled_map.computeNormalizedImageMultiScale();
   unrolled_map.computeGRAYImage();
-  imwrite( "../output/RM_output/"+outputFileName+".png", unrolled_map.getImage());
-  std::cout << "../output/RM_output/"+outputFileName+".png"<< std::endl;
+  imwrite( "output/RM_output/"+outputFileName+".png", unrolled_map.getImage());
+  std::cout << "output/RM_output/"+outputFileName+".png"<< std::endl;
   //std::cout << "size :"<<unrolled_map.getImage().size()<< std::endl;
 
   //uncomment to test drawing mesh
   if(readSegmentation){
     cv::Mat drawn;
 
-    drawn = cv::imread("../input/SEG_input/"+outputFileName+"SEG.png",0);
+    drawn = cv::imread("input/SEG_input/"+outputFileName+"SEG.png",0);
     if (drawn.empty())
     {
       std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
     }
-    trace.info()<<"../input/SEG_input/"<<outputFileName<<"SEG.png"<<std::endl;
+    trace.info()<<"input/SEG_input/"<<outputFileName<<"SEG.png"<<std::endl;
 
     std::vector<unsigned int>  currentPointsInPixels;
     unsigned int IndP;
