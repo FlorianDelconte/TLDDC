@@ -29,7 +29,7 @@ cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
 
-=======
+
 ##Run the program
 ```
  ./segunroll -i ../examples/WildCherry2.off --voxelSize 5 --accRadius 200 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false --output WC2
