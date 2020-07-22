@@ -30,8 +30,8 @@ make
 ```
 
 =======
-* Run the program
+##Run the program
 ```
- ./segunroll -i ../examples/WildCherry2.off --voxelSize 5 --accRadius 100 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false --output WC2
+ ./segunroll -i ../examples/WildCherry2.off --voxelSize 5 --accRadius 200 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false --output WC2
 
 ```
