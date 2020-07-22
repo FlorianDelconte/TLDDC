@@ -3,7 +3,7 @@
 
 Here, we want to explore an other use of the centerline. The main idea, is using centerline to unroll tree mesh, then work on 2D image with an intensity able to represent defect shape. This image may be usefull to labeling task, segmentation task, and clasification task. -->
 
-![alt text](pipeline.png?raw=true "A quoi ça sert ?")
+![alt text](pipeline.pdf?raw=true "A quoi ça sert ?")
 
 ## Dependencies
 The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed:
