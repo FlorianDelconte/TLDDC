@@ -187,7 +187,7 @@ main(int argc,char **argv)
       }
       std::string defectFile = outputPrefix + "-defect.off";
       ///std::string defectFileobj = outputPrefix + "-defect.obj";
-      IOHelper::export2OFF(oriMesh,"output/MESH_output/"+defectFile);
+      IOHelper::export2OFF(oriMesh,defectFile);
       //IOHelper::export2OBJ(oriMesh,"../output/MESH_output/"+defectFileobj);
       //write output mesh
       //write defect id
