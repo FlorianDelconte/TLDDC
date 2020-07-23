@@ -4,6 +4,3 @@
 [submodule "ext/flann"]
 	path = ext/flann
 	url = https://github.com/mariusmuja/flann.git
-[submodule "ext/DGtal"]
-		path = ext/DGtal
-		url = https://github.com/DGtal-team/DGtal.git

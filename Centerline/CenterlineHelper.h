@@ -30,7 +30,7 @@ public:
     static std::vector<TPoint>
     getSmoothCenterlineBSplines(const DGtal::Z3i::Domain &aDomain, const std::vector<TPoint> &fib){
         double minAngle = M_PI / 4*3;
-        
+
         std::vector<TPoint> fibOut;
         //check if first point is good
         TPoint v1 = fib.at(0) - fib.at(1);

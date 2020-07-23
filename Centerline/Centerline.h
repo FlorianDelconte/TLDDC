@@ -1,5 +1,5 @@
 #ifndef CENTERLINE_H
-#define CENTERLINE_H 
+#define CENTERLINE_H
 
 #include "DGtal/base/Common.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -27,7 +27,7 @@
 // class Centerline
 /**
  * Description of class 'Centerline' <p>
- * 
+ *
  * @brief Class to compute centerline of log using volumic accumulation from normal vector field
  * and Splines to smoothing
  *
@@ -51,9 +51,9 @@ class Centerline{
 
 // ----------------------- Standard methods ------------------------------
 public:
-    Centerline( const Mesh<Z3i::RealPoint> &aMesh, const double aRadius, double step, bool iNormal):  
+    Centerline( const Mesh<Z3i::RealPoint> &aMesh, const double aRadius, double step, bool iNormal):
         mesh(aMesh),
-        accRadius(aRadius), 
+        accRadius(aRadius),
         trackStep(step),
         invertNormal(iNormal),
         accImage(Z3i::Domain()), dirImage(Z3i::Domain()){
@@ -80,12 +80,12 @@ protected:
     isFurtherInside(const Z3i::RealPoint &aPoint,
                 const Z3i::RealPoint &aPreviousPoint, double aDistance );
 
-    // Track patch center in one direction 
+    // Track patch center in one direction
     std::vector<Z3i::RealPoint>
     trackPatchCenter(const Z3i::Point &aStartingPoint, bool firstDirection);
 
     /**
-     * Main method for tracking skeleton points from image. 
+     * Main method for tracking skeleton points from image.
      * Tracking the centerline from the maximum density point by two directions
      * @return raw centerline
      */
@@ -93,10 +93,10 @@ protected:
     trackCenterline(const Z3i::Point &aStartingPoint);
 
     /**
-     * Main method for computing tube accumulation values.  
+     * Main method for computing tube accumulation values.
      * It also computes the vector image representing the main
      * axis directionfrom vectorial products from the intersection map (to
-     * help the tracking process).  
+     * help the tracking process).
      * @return the maximum accumulation point.
      */
     Z3i::Point
@@ -116,4 +116,3 @@ protected:
 };
 
 #endif //end CENTERLINE_H
-
