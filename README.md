@@ -15,7 +15,7 @@ This repository allow users to segment wood log surface defects on meshs. First,
 ## Dependencies
 The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed :
 ###### Boost 1.46 or later
-###### DGtal version 0.9. To install DGtal see [DGtal installation] (https://github.com/DGtal-team/DGtal/blob/master/README.md)
+###### DGtal version 0.9.4 To install DGtal see [DGtal installation] (https://github.com/DGtal-team/DGtal/blob/master/README.md)
 ###### PCL version 1.7 or later
 ###### Eigen3
 ###### GNU GSL
