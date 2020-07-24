@@ -12,7 +12,7 @@ Roughly speaking, we first unroll the mesh thanks to the center line log. Then, 
 ![alt text](pipeline.png?raw=true "A quoi ça sert ?")
 
 ## Dependencies
-The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed:
+The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed :
 ###### Boost 1.46 or later
 ###### DGtal version 0.9. To install DGtal see [DGtal installation] (https://github.com/DGtal-team/DGtal/blob/master/README.md)
 ###### PCL version 1.7 or later
@@ -20,7 +20,9 @@ The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or late
 ###### GNU GSL
 ###### CMake 2.6 or later
 ###### OPENCV
-
+Morover if you want to use our trained CNN model to make segmentation, you need theses dependencies to be installed :
+###### tensorflow2.2
+###### tensorflow-addons
 ## Install
 ```
 mkdir build
@@ -28,10 +30,13 @@ cd build
 cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
-
-
 ## Run the program
+Generate a relief map :
 ```
- ./segunroll -i ../examples/WildCherry2.off --voxelSize 5 --accRadius 200 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false --output WC2
-
+./segunroll -i ../examples/INRAE1a/WildCherry2.off --voxelSize 5 --accRadius 200 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false
+```
+Defect segmentation on surface log using our trained model :
+```
+cd runDemo
+./deep-segmentation.sh ../examples/INRAE1a/Beech.off
 ```
