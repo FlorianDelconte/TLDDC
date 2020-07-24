@@ -12,23 +12,21 @@ INCLUDE_DIRECTORIES(${DGTAL_INCLUDE_DIRS})
 LINK_DIRECTORIES(${DGTAL_LIBRARY_DIRS})
 FIND_PROGRAM(CMAKE_PKGCONFIG_EXECUTABLE pkg-config)
 
-#if(CMAKE_PKGCONFIG_EXECUTABLE)
-#  find_package( PkgConfig )
-#  pkg_check_modules( EIGEN3 REQUIRED eigen3 )
-#ELSE(CMAKE_PKGCONFIG_EXECUTABLE)
-#        FIND_PACKAGE(EIGEN3 REQUIRED)
-#ENDIF(CMAKE_PKGCONFIG_EXECUTABLE)
+if(CMAKE_PKGCONFIG_EXECUTABLE)
+  find_package( PkgConfig )
+  pkg_check_modules( EIGEN REQUIRED eigen3 )
+ELSE(CMAKE_PKGCONFIG_EXECUTABLE)
+        FIND_PACKAGE(EIGEN REQUIRED)
+ENDIF(CMAKE_PKGCONFIG_EXECUTABLE)
 
-find_package (Eigen3 REQUIRED NO_MODULE)
-include_directories( ${EIGEN3_INCLUDE_DIRS} )
-
+include_directories( ${EIGEN_INCLUDE_DIRS} )
 
 
 FIND_PACKAGE(GSL REQUIRED)
 INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS})
 LINK_DIRECTORIES(${GSL_LIBRARIES})
 
-find_package(PCL 1.3 REQUIRED COMPONENTS common segmentation segunroll)
+find_package(PCL 1.3 REQUIRED COMPONENTS common segmentation)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -58,7 +56,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 #TARGET_LINK_LIBRARIES(segcyl ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(segunroll SegmentationAbstract IOHelper MainUnroll Statistic  DefectSegmentationUnroll UnrolledMap SegmentationAbstract ImageAnalyser Centerline/Centerline)
-TARGET_LINK_LIBRARIES(segunroll ${DGTAL_LIBRARIES} ${OpenCV_LIBS}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )#
+TARGET_LINK_LIBRARIES(segunroll ${DGTAL_LIBRARIES} ${OpenCV_LIBS}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ADD_EXECUTABLE(colorizeMesh colorizeMesh IOHelper)
 TARGET_LINK_LIBRARIES(colorizeMesh ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies})

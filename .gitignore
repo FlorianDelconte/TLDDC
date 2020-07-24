@@ -8,3 +8,5 @@ examples/*.off
 examples/*.id
 ext/DGtal/*
 output/*
+runDemo/*.off
+runDemo/*.png
