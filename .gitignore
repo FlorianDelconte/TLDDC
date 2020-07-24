@@ -4,8 +4,6 @@ unrollSurfaceOutput/*.jpg
 unrollSurfaceOutput/*.JPG
 clickedPatchOutput/*.dat
 clickedPatchOutput/*.png
-examples/*.off
-examples/*.id
 ext/DGtal/*
 output/*
 runDemo/*.off
