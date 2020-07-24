@@ -8,8 +8,9 @@ Repository of work submitted to ICPR 2020:
 
 the run of the methods can be done without any installation with this online demonstration [here](http://kerautret.github.io/TLDDC)
 
-Roughly speaking, we first unroll the mesh thanks to the center line log. Then, we compute defect segmentation with an CNN. Below, there is an illustration of the pipeline of the project.  
-![alt text](pipeline.png?raw=true "A quoi ça sert ?")
+This repository allow users to segment wood log surface defects on meshs. First, we compute a relief map based on height and circumference of the log. Then, segmentation is done on the relief map by our trained CNN model. Finally, segmentation result is send on mesh. Below, there is a pipeline of the project :  
+
+![alt text](pipeline.png?raw=true "Pipeline")
 
 ## Dependencies
 The program uses some C++ 11 feature, so we recommend the use of gcc 4.7 or later to compile. The program requires these libraries to be installed :
