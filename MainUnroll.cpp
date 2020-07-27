@@ -196,7 +196,10 @@ main(int argc,char **argv)
       //IOHelper::export2Text(defects, "../output/MESH_output/"+outputPrefix + "-defect.id");
       //IOHelper::export2Text(facesToDelete, "../output/MESH_output/"+outputPrefix + "-def-faces.id");
     }
-
+    std::cout << "OpenCV version : " << CV_VERSION << std::endl;
+	  std::cout << "Major version : " << CV_MAJOR_VERSION << std::endl;
+	  std::cout << "Minor version : " << CV_MINOR_VERSION << std::endl;
+	  std::cout << "Subminor version : " << CV_SUBMINOR_VERSION << std::endl;
 
 
 
