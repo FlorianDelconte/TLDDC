@@ -29,11 +29,13 @@
 #include "IOHelper.h"
 #include "MultiThreadHelper.h"
 #include "UnrolledMap.h"
-#include "ImageAnalyser.h"
-
-#include <opencv2/opencv.hpp>
-
-#include <Python.h>
+//#include "ImageAnalyser.h"
+//#include <opencv2/core.hpp>
+//#include <opencv2/imgcodecs.hpp>
+//#include <opencv2/opencv.hpp>
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include<opencv2/opencv.hpp>
 using namespace DGtal;
 
 

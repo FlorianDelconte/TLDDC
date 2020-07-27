@@ -3,8 +3,13 @@
 #include <algorithm>
 #include "CylindricalPoint.h"
 #include "SegmentationAbstract.h"
-#include <opencv2/opencv.hpp>
-
+//#include <opencv2/opencv.hpp>
+#include<opencv2/opencv.hpp>
+//#include "opencv2/imgproc.hpp"
+//#include "opencv2/imgcodecs.hpp"
+//#include "opencv2/core.hpp"
+//#include "opencv2/highgui.hpp"
+//#include "opencv2/types.hpp"
 
 UnrolledMap::UnrolledMap(std::vector<CylindricalPoint> CylindricalPoints,std::vector<double> rRepresenation){
     trace.info()<<"Construct unrolled map..."<<std::endl;

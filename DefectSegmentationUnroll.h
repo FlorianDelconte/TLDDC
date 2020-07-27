@@ -19,8 +19,11 @@
 #include "SegmentationAbstract.h"
 #include "CylindricalPoint.h"
 
-#include <opencv2/opencv.hpp>
-
+//#include <opencv2/opencv.hpp>
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include<opencv2/opencv.hpp>
 using namespace DGtal;
 
 class DefectSegmentationUnroll : public SegmentationAbstract {

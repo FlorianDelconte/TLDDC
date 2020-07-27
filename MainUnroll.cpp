@@ -25,8 +25,8 @@
 #include "Centerline/Centerline.h"
 #include "Centerline/CenterlineHelper.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 
 
 using namespace DGtal;
@@ -185,6 +185,8 @@ main(int argc,char **argv)
           }
 
       }
+      //std::cout << "OpenCV version : " << CV_VERSION << std::endl;
+
       std::string defectFile = outputPrefix + "-defect.off";
       ///std::string defectFileobj = outputPrefix + "-defect.obj";
       IOHelper::export2OFF(oriMesh,defectFile);

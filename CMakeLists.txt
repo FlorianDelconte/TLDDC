@@ -43,8 +43,9 @@ endif( Boost_FOUND)
 SET(PCLLib ${PCL_SEGMENTATION_LIBRARIES})
 
 
-find_package( OpenCV REQUIRED )
+find_package( OpenCV REQUIRED )#core imgproc highgui imgcodecs
 include_directories( ${OpenCV_INCLUDE_DIRS} )
+#link_directories(${OpenCV_LIBRARY_DIRS})
 
 #find_package(Python2 COMPONENTS Development )
 #include_directories(segunroll PRIVATE ${Python2_INCLUDE_DIRS})
@@ -55,7 +56,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 #ADD_EXECUTABLE(segcyl MainCylinder Statistic IOHelper DefectSegmentationCylinder SegmentationAbstract Centerline/Centerline)
 #TARGET_LINK_LIBRARIES(segcyl ${DGTAL_LIBRARIES}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-ADD_EXECUTABLE(segunroll SegmentationAbstract IOHelper MainUnroll Statistic  DefectSegmentationUnroll UnrolledMap SegmentationAbstract ImageAnalyser Centerline/Centerline)
+ADD_EXECUTABLE(segunroll SegmentationAbstract IOHelper MainUnroll Statistic  DefectSegmentationUnroll UnrolledMap SegmentationAbstract Centerline/Centerline)#ImageAnalyser
 TARGET_LINK_LIBRARIES(segunroll ${DGTAL_LIBRARIES} ${OpenCV_LIBS}  ${DGtalToolsLibDependencies} ${PCLLib} ${GSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ADD_EXECUTABLE(colorizeMesh colorizeMesh IOHelper)
