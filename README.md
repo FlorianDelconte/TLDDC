@@ -38,6 +38,5 @@ Generate a relief map :
 ```
 Defect segmentation on surface log using our trained model :
 ```
-cd runDemo
 ./deep-segmentation.sh ../examples/INRAE1a/Beech.off
 ```
