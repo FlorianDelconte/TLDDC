@@ -205,12 +205,12 @@ DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtNam
   if(readSegmentation){
     cv::Mat drawn;
 
-    drawn = cv::imread(outputFileName+"SEG.png",0);
+    drawn = cv::imread(outputFileName+"SEGTRESH.png",0);
     if (drawn.empty())
     {
       std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
     }
-    trace.info()<<outputFileName<<"SEG.png"<<std::endl;
+    trace.info()<<outputFileName<<"SEGTRESH.png"<<std::endl;
 
     std::vector<unsigned int>  currentPointsInPixels;
     unsigned int IndP;

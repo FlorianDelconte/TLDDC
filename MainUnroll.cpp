@@ -187,7 +187,7 @@ main(int argc,char **argv)
       }
       //std::cout << "OpenCV version : " << CV_VERSION << std::endl;
 
-      std::string defectFile = outputPrefix + "-defect.off";
+      std::string defectFile = outputPrefix + "defect.off";
       ///std::string defectFileobj = outputPrefix + "-defect.obj";
       IOHelper::export2OFF(oriMesh,defectFile);
       //IOHelper::export2OBJ(oriMesh,"../output/MESH_output/"+defectFileobj);
@@ -200,7 +200,7 @@ main(int argc,char **argv)
 	  std::cout << "Major version : " << CV_MAJOR_VERSION << std::endl;
 	  std::cout << "Minor version : " << CV_MINOR_VERSION << std::endl;
 	  std::cout << "Subminor version : " << CV_SUBMINOR_VERSION << std::endl;
-
+    return 0;
 
 
 }
