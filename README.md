@@ -36,7 +36,7 @@ Generate a relief map :
 ```
 ./segunroll -i ../examples/INRAE1a/WildCherry2.off --voxelSize 5 --accRadius 200 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false
 ```
-Defect segmentation on surface log using our trained model :
+Defect segmentation on surface log using our trained model (named 'leakyReLu.hdf5'):
 ```
-./deep-segmentation.sh ../examples/INRAE1a/Beech.off
+./deep-segmentation.sh leakyReLu.hdf5 ../examples/INRAE1a/Beech.off
 ```
