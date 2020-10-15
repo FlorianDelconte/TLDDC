@@ -19,11 +19,7 @@
 #include "SegmentationAbstract.h"
 #include "CylindricalPoint.h"
 
-//#include <opencv2/opencv.hpp>
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/imgcodecs/imgcodecs.hpp>
-#include<opencv2/opencv.hpp>
+
 using namespace DGtal;
 
 class DefectSegmentationUnroll : public SegmentationAbstract {
@@ -33,8 +29,7 @@ class DefectSegmentationUnroll : public SegmentationAbstract {
 
     void init() override;
 
-    std::vector<unsigned int>
-    getDefect(std::string output,std::string gtName,bool readSegmentation );
+    void makeRM(std::string output,std::string gtName,int dF,int gs_ori,int intensity);
 
   protected:
 

@@ -16,6 +16,17 @@
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/colormaps/HueShadeColorMap.h"
 
+#include "DGtal/helpers/StdDefs.h"
+#include "DGtal/io/readers/PGMReader.h"
+#include "DGtal/io/boards/Board2D.h"
+#include "DGtal/io/readers/GenericReader.h"
+#include "DGtal/io/writers/GenericWriter.h"
+#include "DGtal/io/colormaps/GrayscaleColorMap.h"
+#include "DGtal/images/imagesSetsUtils/SetFromImage.h"
+#include "DGtal/images/ImageSelector.h"
+#include "DGtal/images/ImageContainerBySTLVector.h"
+#include "DGtal/images/Image.h"
+#include "DGtal/images/RigidTransformation2D.h"
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
@@ -29,18 +40,14 @@
 #include "IOHelper.h"
 #include "MultiThreadHelper.h"
 #include "UnrolledMap.h"
-//#include "ImageAnalyser.h"
-//#include <opencv2/core.hpp>
-//#include <opencv2/imgcodecs.hpp>
-//#include <opencv2/opencv.hpp>
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/imgcodecs/imgcodecs.hpp>
-#include<opencv2/opencv.hpp>
+
+
 using namespace DGtal;
 
 
 void
 DefectSegmentationUnroll::init(){
+    trace.info()<<"\tCompute reference distance..."<<std::endl;
     allocate();
     computeBeginOfSegment();
     computeVectorMarks();
@@ -151,7 +158,7 @@ DefectSegmentationUnroll::computeDistances(){
 }
 
 
-
+using namespace functors;
 void
 DefectSegmentationUnroll::computeDeltaDistances(){
 
@@ -177,72 +184,56 @@ DefectSegmentationUnroll::computeRadiusDistances(){
 }
 
 
-std::vector<unsigned int>
-DefectSegmentationUnroll::getDefect(std::string outputFileName,std::string gtName, bool readSegmentation ){
-  std::vector<unsigned int> concatPointInPixels;
-  //compute vector of distances like distance=deltadistance
+void
+DefectSegmentationUnroll::makeRM(std::string outputFileName,std::string gtName,int dF,int gs_ori,int intensity){
+
+                    /************************************/
+                    /*Compute a distances for each point*/
+                    /************************************/
+  //1) compute vector of distances like :  distance=deltadistance
   computeDeltaDistances();
-  //Compute vector of distance like distance=radius
+  //2) Compute vector of distance like :  distance=radius
   //computeRadiusDistances();
-  //Compute vector of distancelike distance=deltadistance filtred by rosin
+  //3) Compute vector of distance like : distance = deltadistance filtred by rosin
   //computeDeltaDistancesRosin();
   //Construct Unrolled_map with a vectorof distance (vector size = point cloud size)
-  UnrolledMap unrolled_map(myPoints,distances);
-  //compute the normalized image
-  /*unrolled_map.computeNormalizedImage(1);
-  unrolled_map.computeRGBImage();
-  imwrite( "../../unrollSurfaceOutput/"+outputFileName+"RGB.png", unrolled_map.getImage());
-  //unrolled_map.computeGRAYImage();*/
-  //imwrite( "../../unrollSurfaceOutput/"+outputFileName+"GRAY.png", unrolled_map.getImage());
-  //compute an rgb image from normalized image
+  UnrolledMap unrolled_map(myPoints,distances,dF,gs_ori,intensity);
+                    /*******************************/
+                    /*Discretisation by unrolledMap*/
+                    /*******************************/
+  unrolled_map.computeDicretisation();
+                    /***********************************************/
+                    /*Multi Resolution or normal resolution analyse*/
+                    /***********************************************/
+  //multi resolution approach (use maxDecreaseFactor)
   unrolled_map.computeNormalizedImageMultiScale();
+  //normal resolution apporach (param is for reducted dimension)
+  //unrolled_map.computeNormalizedImage(1);
+
+                    /**************************************************/
+                    /*make representation of relief map in Gray or RGB*/
+                    /**************************************************/
+  //compute gray image
   unrolled_map.computeGRAYImage();
-  imwrite(outputFileName+".png", unrolled_map.getImage());
-  std::cout << outputFileName+".png"<< std::endl;
-  //std::cout << "size :"<<unrolled_map.getImage().size()<< std::endl;
+  //get and write gray image
+  unrolled_map.getReliefImageGrayScale()>>outputFileName+".pgm";
+  //compute rgb image from unrolledmap
+  //unrolled_map.computeRGBImage();
+  //get and write rgb image
+  //unrolled_map.getReliefImageRGB()>>outputFileName+"RGB.ppm";
 
-  //uncomment to test drawing mesh
-  if(readSegmentation){
-    cv::Mat drawn;
+                    /*****************************************/
+                    /*write discretisation vector in txt file*/
+                    /*****************************************/
+  IOHelper::writeDiscretisationToFile(unrolled_map.getDiscretisation(),unrolled_map.getRowCroppedBot(),unrolled_map.getRowCroppedTop(),"discretisation.txt");
+                    /**********************************************************/
+                    /*make grounthTruth relief map (for deeplearning training)
+                    /*CAREFULL : NEED OPENCV                                  */
+                    /**********************************************************/
 
-    drawn = cv::imread(outputFileName+"SEGTRESH.png",0);
-    if (drawn.empty())
-    {
-      std::cout << "!!! Failed imread(): drawinf input not found" << std::endl;
-    }
-    trace.info()<<outputFileName<<"SEGTRESH.png"<<std::endl;
+  //read defect id from file $
+  //std::vector<int> indDefect;
+  //IOHelper::readIntsFromFile(gtName,indDefect);
+  //unrolled_map.makeGroundTruthImage(indDefect,outputFileName);
 
-    std::vector<unsigned int>  currentPointsInPixels;
-    unsigned int IndP;
-    int currentIntensity;
-    for (int i=0; i < drawn.rows; ++i){
-      for (int j=0; j < drawn.cols; ++j){
-        currentIntensity=(int)drawn.at<uchar>(i, j);
-        if(currentIntensity>0){
-          currentPointsInPixels=unrolled_map.getPointsUnrolled_surface(i,j);
-
-          for(std::vector<unsigned int>::iterator it = std::begin(currentPointsInPixels); it != std::end(currentPointsInPixels); ++it) {
-            IndP=*it;
-            concatPointInPixels.push_back(IndP);
-          }
-        }
-      }
-    }
-    trace.info()<<concatPointInPixels.size()<<std::endl;
-  }
-
-
-
-  //uncomment to create groundTruth image
-  /*std::vector<int> groundtrueIds;
-  IOHelper::readIntsFromFile(gtName, groundtrueIds);
-  std::cout << gtName<< std::endl;
-  cv::Mat gtimg=unrolled_map.makeGroundTruthImage(groundtrueIds);
-  imwrite( "../../unrollSurfaceOutput/"+outputFileName+"_GT.png",unrolled_map.makeGroundTruthImage(groundtrueIds));*/
-
-  //Uncomment to analyse relief image
-  //ImageAnalyser image_analyser(unrolled_map,ind_Patches,myPoints,coefficients);
-  //image_analyser.analyse();
-
-  return concatPointInPixels;
 }
