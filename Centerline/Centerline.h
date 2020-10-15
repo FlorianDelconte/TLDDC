@@ -20,9 +20,6 @@
 #include <DGtal/kernel/domains/HyperRectDomain.h>
 
 #include "DGtal/shapes/Mesh.h"
-
-
-#include "MyPoint2DEmbedderIn3D.h"
 ///////////////////////////////////////////////////////////////////////////////
 // class Centerline
 /**
