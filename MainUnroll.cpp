@@ -45,14 +45,16 @@ main(int argc,char **argv)
     general_opt.add_options()
         ("help,h", "display this message")
         ("input,i", po::value<std::string>(), "input mesh.")
-        ("accRadius,r", po::value<double>(), "accumulation radius.")
-        ("trackStep,s", po::value<double>(), "tracking step.")
+        ("accRadius,r", po::value<double>()->default_value(200), "accumulation radius.")
+        ("trackStep,s", po::value<double>()->default_value(20), "tracking step.")
         ("invertNormal,n", "invert normal to apply accumulation.")
-        ("binWidth,b", po::value<double>()->default_value(5.0), "bin width used to compute threshold")
+        ("binWidth,b", po::value<double>()->default_value(0.01), "bin width used to compute threshold")
         ("patchWidth,a", po::value<double>()->default_value(25), "Arc length/ width of patch")
         ("patchHeight,e", po::value<int>()->default_value(100), "Height of patch")
-        ("voxelSize", po::value<int>()->default_value(1), "Voxel size")
-        ("drawing,d", po::value<bool>()->default_value(false), "segmentation true : read binary image from drawingInput/")
+        ("voxelSize", po::value<int>()->default_value(5), "Voxel size")
+        ("decreaseFactor,d", po::value<int>()->default_value(4), "Max decrease factor for multi resolution search")
+        ("grayscaleOrigin", po::value<int>()->default_value(-5), "relief value for 0 level in grayscale intensity")
+        ("intensityPerCm", po::value<int>()->default_value(10), "number of grayscale intensity to represente 1cm of relief")
         ("output,o", po::value<std::string>()->default_value("output"), "output prefix: output-defect.off, output-def-faces-ids, ...");
 
     bool parseOK=true;
@@ -86,9 +88,11 @@ main(int argc,char **argv)
     double accRadius = vm["accRadius"].as<double>() / voxelSize;
     double trackStep = vm["trackStep"].as<double>() / voxelSize;
     bool invertNormal = vm.count("invertNormal");
-
+    //trace.info()<< "invertNormal :::::::::" <<invertNormal<<std::endl;
     double binWidth = vm["binWidth"].as<double>();
-
+    int maxDecreaseFactor=vm["decreaseFactor"].as<int>();
+    int gs_origin=vm["grayscaleOrigin"].as<int>();
+    int intensity_cm=vm["intensityPerCm"].as<int>();
     DGtal::Mesh<Z3i::RealPoint> oriMesh(true);
     std::string inputMeshName = vm["input"].as<std::string>();
 
@@ -104,10 +108,8 @@ main(int argc,char **argv)
         Z3i::RealPoint &p = scaledMesh.getVertex(i);
         p /= voxelSize;
     }
+    trace.info()<<"Cloud size : "<< pointCloud.size()<< std::endl;
 
-    trace.info()<<"Begin accumulation:"<<std::endl;
-    trace.info()<<"trackStep:"<<trackStep<<std::endl;
-    trace.info()<<"accRadius:"<<accRadius<<std::endl;
     Centerline acc(scaledMesh, accRadius, trackStep, invertNormal);
 
     std::copy(oriMesh.vertexBegin(), oriMesh.vertexEnd(), pointCloud.begin());
@@ -127,7 +129,8 @@ main(int argc,char **argv)
             Z3i::Point((int) ptUp[0], (int) ptUp[1], (int) ptUp[2]));
 
     std::vector<Z3i::RealPoint> centerline = CenterlineHelper::getSmoothCenterlineBSplines(domain, fiber);
-
+    trace.info()<<"centerline size : "<< fiber.size()<< std::endl;
+    trace.info()<<"centerline smoothed size : "<< centerline.size()<< std::endl;
     // Uncomment to test interpolated centerline
     //write centerline
     Mesh<Z3i::RealPoint> transMesh = oriMesh;
@@ -137,69 +140,25 @@ main(int argc,char **argv)
     Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, fiber, 1, 0.1, DGtal::Color::Blue);
     Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, centerline, 1, 0.1, DGtal::Color::Red);
 
-    //IOHelper::export2OFF(transMesh, "centerline.off");
+    IOHelper::export2OFF(transMesh, "centerline.off");
 
 
     double patchWidth = vm["patchWidth"].as<double>();
     int patchHeight = vm["patchHeight"].as<int>();
-
-
-    trace.info()<<"arc:"<<patchWidth<<std::endl;
-    trace.info()<<"fiber:"<<centerline.size()<<std::endl;
     std::string outputPrefix = vm["output"].as<std::string>();
     size_t lastindex = inputMeshName.find_last_of(".");
 
     std::string GtFileName = inputMeshName.substr(0, lastindex)+"-groundtruth-points.id";
 
-    std::cout <<"taille du nuage de poinrt : "<< pointCloud.size()<< std::endl;
 
-    bool segmentationCB = vm["drawing"].as<bool>();
+
+
     DefectSegmentationUnroll sa(pointCloud,centerline,patchWidth,patchHeight,binWidth);
     sa.init();
-    std::vector<unsigned int> defects=sa.getDefect(outputPrefix,GtFileName,segmentationCB);
+    sa.makeRM(outputPrefix,GtFileName, maxDecreaseFactor,gs_origin,intensity_cm);
 
 
-    //Comeback on the mesh
-    if(segmentationCB){
-      DGtal::Mesh<Z3i::RealPoint> errorMesh = oriMesh;
 
-      std::vector<bool> defectFlags(pointCloud.size(), false);
-      for(unsigned int i = 0; i< defects.size(); i++){
-          defectFlags[defects.at(i)] = true;
-      }
-
-      std::vector<unsigned int> facesToDelete;
-      //color defect mesh
-      for (unsigned int i = 0; i < oriMesh.nbFaces(); i++){
-          Face aFace = oriMesh.getFace(i);
-          unsigned int c = 0;
-          for (unsigned int k = 0; k < aFace.size(); k++){
-              //trace.info()<<aFace.at(k)<<std::endl;
-              if(defectFlags.at(aFace.at(k))){
-                  c++;
-              }
-          }
-          if(c >=  aFace.size()){
-              oriMesh.setFaceColor(i, DGtal::Color::Green);
-              facesToDelete.push_back(i);
-          }
-
-      }
-      //std::cout << "OpenCV version : " << CV_VERSION << std::endl;
-
-      std::string defectFile = outputPrefix + "defect.off";
-      ///std::string defectFileobj = outputPrefix + "-defect.obj";
-      IOHelper::export2OFF(oriMesh,defectFile);
-      //IOHelper::export2OBJ(oriMesh,"../output/MESH_output/"+defectFileobj);
-      //write output mesh
-      //write defect id
-      //IOHelper::export2Text(defects, "../output/MESH_output/"+outputPrefix + "-defect.id");
-      //IOHelper::export2Text(facesToDelete, "../output/MESH_output/"+outputPrefix + "-def-faces.id");
-    }
-    std::cout << "OpenCV version : " << CV_VERSION << std::endl;
-	  std::cout << "Major version : " << CV_MAJOR_VERSION << std::endl;
-	  std::cout << "Minor version : " << CV_MINOR_VERSION << std::endl;
-	  std::cout << "Subminor version : " << CV_SUBMINOR_VERSION << std::endl;
     return 0;
 
 
