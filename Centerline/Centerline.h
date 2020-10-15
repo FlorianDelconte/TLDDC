@@ -22,7 +22,7 @@
 #include "DGtal/shapes/Mesh.h"
 
 
-
+#include "MyPoint2DEmbedderIn3D.h"
 ///////////////////////////////////////////////////////////////////////////////
 // class Centerline
 /**
@@ -43,7 +43,7 @@ typedef ImageContainerBySTLVector<Z3i::Domain,  Z3i::RealPoint> ImageVector;
 typedef ImageContainerBySTLVector<Z3i::Domain, unsigned char> Image3DChar;
 typedef typename Mesh<Z3i::RealPoint>::MeshFace Face;
 
-typedef ConstImageAdapter<Image3D, Z2i::Domain, functors::Point2DEmbedderIn3D<Z3i::Domain>,
+typedef ConstImageAdapter<Image3D, Z2i::Domain,  functors::Point2DEmbedderIn3D<Z3i::Domain>,
                                  unsigned int, functors::Identity >  ImageAdapterExtractor;
 
 
@@ -56,7 +56,8 @@ public:
         accRadius(aRadius),
         trackStep(step),
         invertNormal(iNormal),
-        accImage(Z3i::Domain()), dirImage(Z3i::Domain()){
+        accImage(Z3i::Domain()),
+        dirImage(Z3i::Domain()){
             std::pair<DGtal::Z3i::RealPoint, DGtal::Z3i::RealPoint> boudingBox = mesh.getBoundingBox();
             Z3i::RealPoint ptLow = boudingBox.first;
             Z3i::RealPoint ptUp = boudingBox.second;

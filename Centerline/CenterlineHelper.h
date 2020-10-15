@@ -11,7 +11,7 @@
 #include "DGtal/shapes/implicit/ImplicitBall.h"
 #include "DGtal/shapes/EuclideanShapesDecorator.h"
 #include "DGtal/shapes/GaussDigitizer.h"
-
+#include "DGtal/kernel/PointVector.h"
 
 //#include "DGtal/geometry/curves/AlphaThickSegmentComputer.h"
 
@@ -149,17 +149,17 @@ public:
         TPoint lastPoint = smoothFib[smoothFib.size()-1];
 
         std::vector<TPoint> frontVect;
-
         TPoint nextFront = firstPoint + firstVect;
 
-        while(aDomain.isInside(nextFront)){
+        //POSSIBLE ici
+        while(aDomain.isInside(DGtal::PointVector<3, int>(nextFront))){//while(aDomain.isInside(nextFront)){
             frontVect.push_back(nextFront);
             nextFront = nextFront + firstVect;
         }
 
         std::vector<TPoint> backVect;
         TPoint nextBack = lastPoint + lastVect;
-        while(aDomain.isInside(nextBack)){
+        while(aDomain.isInside(DGtal::PointVector<3, int>(nextBack))){//while(aDomain.isInside(nextBack)){
             backVect.push_back(nextBack);
             nextBack = nextBack + lastVect;
         }
@@ -221,14 +221,25 @@ public:
     static DGtal::Z2i::Point
     getMaxCoords(const TImage &anImage){
         DGtal::Z2i::Point ptMax = *(anImage.domain().begin());
+
         typename TImage::Value valMax = anImage(ptMax);
+
         for( typename TImage::Domain::ConstIterator it = anImage.domain().begin(); it!= anImage.domain().end(); it++){
+
             typename TImage::Value val = anImage(*it);
+
+
+
+
+
             if(val>valMax){
+
                 valMax = val;
                 ptMax = *it;
             }
+
         }
+
         return ptMax;
     }
 

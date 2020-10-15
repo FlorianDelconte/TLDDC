@@ -35,7 +35,8 @@ Centerline::optimizeElasticForces(std::vector<Z3i::RealPoint> aFiberRaw, double 
         Z3i::RealPoint ptFiber (aFiberRaw.at(i)[0], aFiberRaw.at(i)[1], aFiberRaw.at(i)[2]);
         //trace.error()<< "Dir: "<< dirImage(ptFiber)<<std::endl;
         std::vector<unsigned int> someFaces = CenterlineHelper::getSectionFacesFromDirection(mesh, aFiberRaw.at(i),
-                dirImage(ptFiber), 0.1, 1.5*accRadius);
+                dirImage(DGtal::PointVector<3, int>(ptFiber)), 0.1, 1.5*accRadius);//dirImage(ptFiber)
+
         if(someFaces.size() <= 0){
             continue;
         }
@@ -66,13 +67,12 @@ Centerline::optimizeElasticForces(std::vector<Z3i::RealPoint> aFiberRaw, double 
     }
     //ring with no face
     double radii = sumRadiis / nbFaces;
-	std::cout<<"radii: "<<radii<<std::endl;
 
     double deltaE;
     unsigned int  num = 0;
     double previousTot = 0;
     bool  first = true;
-    trace.info() << "Starting optimisation with min precision diff:  " << epsilon <<  std::endl;
+    trace.info() << "Starting optimisation with min precision diff :" << epsilon << "..."<< std::endl;
     while (first || deltaE > epsilon){
         num++;
         double totalError = 0.0;
@@ -115,8 +115,7 @@ Centerline::optimizeElasticForces(std::vector<Z3i::RealPoint> aFiberRaw, double 
             }
             //project of sumForces to normal vector
             Z3i::RealPoint originalPointOnFib(aFiber.at(i)[0], aFiber.at(i)[1], aFiber.at(i)[2]);
-            Z3i::RealPoint vectDir = dirImage(originalPointOnFib);
-
+            Z3i::RealPoint vectDir = dirImage(DGtal::PointVector<3, int>(originalPointOnFib));//dirImage(originalPointOnFib)
             Z3i::RealPoint sumForcesDir = vectDir.dot(sumForces)/vectDir.norm()/vectDir.norm()*vectDir;
             Z3i::RealPoint radialForces = sumForces - sumForcesDir;
             if(nb > 0){
@@ -159,20 +158,23 @@ Centerline::trackPatchCenter(const Z3i::Point &aStartingPoint, bool firstDirecti
     unsigned int patchImageSize= 2*accRadius;
     Z3i::RealPoint currentPoint = aStartingPoint;
     Z3i::RealPoint lastDirVect =  dirImage(aStartingPoint)/dirImage(aStartingPoint).norm();
-    //trace.info()<<"lastDir"<<lastDirVect<<std::endl;
+
+
 
     if (!firstDirection){
         lastDirVect *= -1.0;
     }
+    //STRANGE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    Z3i::RealPoint previousPoint = aStartingPoint-DGtal::PointVector<3, int>(lastDirVect*trackStep);
 
-    Z3i::RealPoint previousPoint = aStartingPoint-lastDirVect*trackStep;
     std::vector<Z3i::RealPoint> trackingResult;
     int num = 0;
 
     Z3i::RealPoint lastDirVectToStartingPoint =  lastDirVect;
+
     while (continueTracking){
         trackingResult.push_back(currentPoint);
-        Z3i::RealPoint dirVect = dirImage(currentPoint)/dirImage(currentPoint).norm();
+        Z3i::RealPoint dirVect = dirImage(DGtal::PointVector<3, int>(currentPoint))/dirImage(DGtal::PointVector<3, int>(currentPoint)).norm();//dirImage(currentPoint)/dirImage(currentPoint).norm()
 
         if(lastDirVect.dot(dirVect)<0){
             dirVect *= -1.0;
@@ -180,6 +182,7 @@ Centerline::trackPatchCenter(const Z3i::Point &aStartingPoint, bool firstDirecti
         //dirVect = (dirVect + lastDirVect ).getNormalized();
         //trace.error() << "dirVect" << dirVect<<std::endl;
         continueTracking = isFurtherInside(currentPoint, previousPoint, trackStep );
+
         if (!continueTracking) {
             trace.info() << std::endl << "Dir  track "<< dirVect << std::endl;
             trace.info() << "Stopping front End of tube..." << std::endl;
@@ -189,26 +192,53 @@ Centerline::trackPatchCenter(const Z3i::Point &aStartingPoint, bool firstDirecti
 
         Z3i::RealPoint pPatch = currentPoint + (dirVect*trackStep);
 
-        if (!accImage.domain().isInside(pPatch)){
-            trace.info() << "Not in domain patch :" <<pPatch<<  std::endl;
-            trace.info() << "current point :" <<currentPoint<<  std::endl;
-            trace.info() << "dur vect :" <<dirVect<<  std::endl;
-            trace.info() << "image val :" <<accImage(currentPoint)<<  std::endl;
+        if (!accImage.domain().isInside(DGtal::PointVector<3, int>(pPatch))){//!accImage.domain().isInside(pPatch)
+            //trace.info() << "Not in domain patch :" <<pPatch<<  std::endl;
+            //trace.info() << "current point :" <<currentPoint<<  std::endl;
+            //trace.info() << "dur vect :" <<dirVect<<  std::endl;
+            //trace.info() << "image val :" <<accImage(DGtal::PointVector<3, int>(currentPoint))<<  std::endl;//trace.info() << "image val :" <<accImage(currentPoint)<<  std::endl;
             continueTracking = false;
             break;
         }
 
+        //std::cout <<"DIRVECT  : "<<dirVect<<std::endl;
+        //std::cout <<"PATCHIMAGESIZE  : "<<patchImageSize<<std::endl;
+        //std::cout <<"DEFAUT POINT  : "<<Z3i::Point(0,0,0)<<std::endl;
+
+        //std::cout <<"ACCIMAGE DOMAIN  : "<<accImage.domain()<<std::endl;
 
         // Getting image patch from volume
-        DGtal::functors::Point2DEmbedderIn3D<DGtal::Z3i::Domain >  embedder(accImage.domain(), pPatch,
-                dirVect, patchImageSize,  Z3i::Point(0,0,0));
-        DGtal::Z2i::Domain domainImage2D (DGtal::Z2i::Point(0,0),
-                DGtal::Z2i::Point(patchImageSize, patchImageSize));
+        DGtal::functors::Point2DEmbedderIn3D<DGtal::Z3i::Domain >  embedder(accImage.domain(), DGtal::PointVector<3, int>(pPatch),dirVect, patchImageSize,  Z3i::Point(0,0,0));
+
+        //DGtal::functors::Point2DEmbedderIn3D<DGtal::Z3i::Domain > embedder(accImage.domain(), DGtal::PointVector<3, int>(pPatch),dirVect, patchImageSize,  Z3i::Point(0,0,0));
+
+        DGtal::Z2i::Domain domainImage2D (DGtal::Z2i::Point(0,0), DGtal::Z2i::Point(patchImageSize, patchImageSize));
+
         functors::Identity id;
+
+        Image3D::Value valmax=0;
+        /*for( Image3D::Domain::ConstIterator it = accImage.domain().begin(); it!= accImage.domain().end(); it++){
+          Image3D::Value val = accImage(*it);
+          if(val>valmax){
+            valmax=val;
+            std::cout <<"point  : "<<*it<<std::endl;
+            std::cout <<"valmax : "<<valmax<<std::endl;
+          }
+        }
+        exit(1);*/
         ImageAdapterExtractor patchImage(accImage, domainImage2D, embedder, id );
+        ImageAdapterExtractor::Value valmax2=0;
+                /*for( ImageAdapterExtractor::Domain::ConstIterator it = patchImage.domain().begin(); it!= patchImage.domain().end(); it++){
+                  ImageAdapterExtractor::Value val = patchImage(*it);
+                  if(val>valmax2){
+                    valmax2=val;
+                    std::cout <<"point : "<<*it<<std::endl;
+                    std::cout <<"valmax : "<<valmax2<<std::endl;
+                  }
+                }*/
 
         Z2i::Point max2Dcoords = CenterlineHelper::getMaxCoords(patchImage);
-        trace.info() << " 2D max coords:" << max2Dcoords[0] <<  " " << max2Dcoords[1]<< std::endl;
+
         if(max2Dcoords[0]==0.0 && max2Dcoords[1]==0.0){
             continueTracking=false;
         }
@@ -217,6 +247,7 @@ Centerline::trackPatchCenter(const Z3i::Point &aStartingPoint, bool firstDirecti
 
         previousPoint = currentPoint;
         currentPoint = embedder(CenterlineHelper::getMaxCoords(patchImage));
+
         Z3i::RealPoint newDirVect = (currentPoint - previousPoint)/(currentPoint - previousPoint).norm();
         //trace.error()<<"angle"<<acos(newDirVect.dot(dirVect))<<std::endl;
         //should not go back
@@ -233,17 +264,18 @@ Centerline::trackPatchCenter(const Z3i::Point &aStartingPoint, bool firstDirecti
         }
         num++;
     }
-    trace.info()  << "tracking ended" << std::endl;
     return trackingResult;
 }
 
 
 std::vector<Z3i::RealPoint>
 Centerline::trackCenterline(const Z3i::Point &aStartingPoint){
+    trace.info()<< "Track centerline..." << std::endl;
     std::vector<Z3i::RealPoint> skeletonResult;
     std::vector<Z3i::RealPoint> skeletonResultFront;
 
     skeletonResultFront = trackPatchCenter(aStartingPoint, true);
+
     trace.info()<< "End tracking front" << std::endl;
 
     if(skeletonResultFront.size()>0){
@@ -267,6 +299,7 @@ Centerline::trackCenterline(const Z3i::Point &aStartingPoint){
 
 Z3i::Point
 Centerline::accumulate(double epsilonArea=0.1){
+    trace.info()<<"Accumulate..."<<std::endl;
     unsigned int valMax = 0;
     ImageVector tmpImageVector(domain);
 
@@ -290,42 +323,60 @@ Centerline::accumulate(double epsilonArea=0.1){
         if (invertNormal){
             scanDir *= -1;
         }
-
+        //trace.info() <<"SCANDIR :"<<scanDir << std::endl;
         Z3i::RealPoint centerPoint = (p0+p1+p2)/3.0;
-
+        //trace.info() <<"CENTERPOINT :"<<centerPoint << std::endl;
         //test scan dir, should be removed, to verify?
-        Z3i::RealPoint testPoint = centerPoint + scanDir*20;
+        Z3i::RealPoint testPoint = centerPoint + scanDir*20;//OK|OK
 
-        if(!accImage.domain().isInside(testPoint)){
+        //DGtal::PointVector<3, int>(currentPoint)
+        if(!accImage.domain().isInside(DGtal::PointVector<3, int>(testPoint))){
             scanDir *=-1;
             nbF++;
         }
 
-        Z3i::RealPoint currentPoint = centerPoint;
+        Z3i::RealPoint currentPoint = centerPoint;//OK
         Z3i::RealPoint previousPoint;
-        while((currentPoint - centerPoint).norm() < accRadius){
-            if(domain.isInside(currentPoint) && previousPoint != currentPoint){
-                // point first processing: init vect
-                if(accImage(currentPoint) != 0){
-                    Z3i::RealPoint aVector = tmpImageVector(currentPoint).crossProduct(scanDir);
-                    if(aVector.dot(dirImage(currentPoint))<0){
+        //trace.info() <<"CURRENTPOINT :"<<currentPoint << std::endl;
+        int c=0;
+        while((currentPoint - centerPoint).norm() < accRadius){//OK
+
+          c++;
+
+            if(domain.isInside(DGtal::PointVector<3, int>(currentPoint)) && previousPoint != currentPoint){//  if(domain.isInside(currentPoint) && previousPoint != currentPoint){
+
+                if(accImage(DGtal::PointVector<3, int>(currentPoint)) != 0){//if(accImage(currentPoint) != 0){
+
+                    Z3i::RealPoint aVector = tmpImageVector(DGtal::PointVector<3, int>(currentPoint)).crossProduct(scanDir);//Z3i::RealPoint aVector = tmpImageVector(currentPoint).crossProduct(scanDir);
+
+                    if(aVector.dot(dirImage(DGtal::PointVector<3, int>(currentPoint)))<0){
                         aVector *=-1;
                     }
+
                     if(aVector.norm() > epsilonArea){
-                        dirImage.setValue(currentPoint, (dirImage(currentPoint)+aVector));
+                        dirImage.setValue(DGtal::PointVector<3, int>(currentPoint), (dirImage(DGtal::PointVector<3, int>(currentPoint))+aVector));//dirImage.setValue(currentPoint, (dirImage(currentPoint)+aVector));
                     }
                 }
-                tmpImageVector.setValue(currentPoint, scanDir);
+                tmpImageVector.setValue(DGtal::PointVector<3, int>(currentPoint), scanDir);//OK//tmpImageVector.setValue(currentPoint, scanDir);
 
-                accImage.setValue(currentPoint, accImage(currentPoint)+1);
-                previousPoint = currentPoint;
-                if( accImage(currentPoint) > valMax ) {
-                    valMax = accImage(currentPoint);
-                    pointPosMax = currentPoint;
+                accImage.setValue(DGtal::PointVector<3, int>(currentPoint), accImage(DGtal::PointVector<3, int>(currentPoint))+1);
+
+
+                previousPoint = currentPoint;//OK
+
+                if( accImage(DGtal::PointVector<3, int>(currentPoint)) > valMax ) {
+
+                    valMax = accImage(DGtal::PointVector<3, int>(currentPoint));//ok ok
+
+                    pointPosMax = currentPoint;//not OK
+
+
                 }
             }
-            previousPoint = currentPoint;
-            currentPoint += scanDir;
+            previousPoint = currentPoint;//OK
+
+            currentPoint += scanDir;//OK
+
         }
     }
     //normalize
@@ -333,27 +384,28 @@ Centerline::accumulate(double epsilonArea=0.1){
         dirImage.setValue(*it, dirImage(*it)/dirImage(*it).norm());
     }
 
-    return pointPosMax;
+    //trace.info() << "POINT POS MAX : "<<pointPosMax<< std::endl;
+
+    return DGtal::PointVector<3, int>(pointPosMax);
+
+
 }
 
 
 std::vector<Z3i::RealPoint>
 Centerline::compute(){
+    trace.info()<<"\tCompute centerline..."<<std::endl;
     Z3i::Point maxAccPoint = accumulate();
+    //trace.info() << "POINT POS MAX : "<<maxAccPoint<< std::endl;
     std::vector<Z3i::RealPoint> vectFiber = trackCenterline(maxAccPoint);
+    //trace.info() << "VECT FIBER : "<<vectFiber.at(vectFiber.size()-1)<< std::endl;
     std::vector<Z3i::RealPoint> optiFiber = optimizeElasticForces(vectFiber, 0.000001);
     //write centerline
     Mesh<Z3i::RealPoint> transMesh = mesh;
     for(unsigned int i =0; i< transMesh.nbFaces(); i++){
         transMesh.setFaceColor(i, DGtal::Color(120, 120 ,120, 180));
     }
-    /*uncomment to test centerline and effect of optimisation
-    Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, vectFiber, 1, 0.1, DGtal::Color::Blue);
-    Mesh<Z3i::RealPoint>::createTubularMesh(transMesh, optiFiber, 1, 0.1, DGtal::Color::Red);
-    IOHelper::export2Text(vectFiber, "vectFiber.xyz");
-    IOHelper::export2Text(optiFiber, "optiFiber.xyz");
-    IOHelper::export2OFF(transMesh, "debugCen.off");
-    */
+
 
     return optiFiber;
 }
