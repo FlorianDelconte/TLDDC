@@ -1,11 +1,13 @@
 #ignore the folder called build anywhere, but not files called build
 build/
-unrollSurfaceOutput/*.jpg
-unrollSurfaceOutput/*.JPG
-clickedPatchOutput/*.dat
-clickedPatchOutput/*.png
-ext/DGtal/*
-output/*
-runDemo/*.off
-runDemo/*.png
-test.cpp
+run/*.off
+run/*.png
+run/*.pgm
+run/*.id
+run/*.txt
+mesures/*.off
+mesures/*.png
+mesures/*.pgm
+mesures/*.id
+mesures/*.txt
+__pycache__
