@@ -38,8 +38,8 @@ Generate a relief map :
 ```
 ./segunroll -i *PathToMesh* -n
 ```
-Generate all relief map from INRAE1a directory :
+Generate all relief map from all mesh in an directory :
 ```
 cd mesures/
-./makeAllRm.sh *PathToExampleDirectory*
+./makeAllRm.sh *PathToMeshDirectory*
 ```
