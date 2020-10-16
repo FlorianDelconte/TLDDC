@@ -25,6 +25,7 @@ The program uses some C++ 14 feature, so we recommend the use of gcc 4.7 or late
 Morover if you want to use our trained CNN model to make segmentation, you need theses dependencies to be installed (virtual environnement is recommanded):
 ###### tensorflow2.2, see [TensorFlow installation] (https://www.tensorflow.org/install/pip)
 ###### tensorflow-addons, see [TensorFlow addons installation] (https://www.tensorflow.org/addons/overview)
+###### openCV for python, see [OpenCV installation] (https://pypi.org/project/opencv-python/)
 ## Install
 ```
 mkdir build
