@@ -43,10 +43,10 @@ endif( Boost_FOUND)
 SET(PCLLib ${PCL_SEGMENTATION_LIBRARIES})
 
 
-find_package( OpenCV REQUIRED )#core imgproc highgui imgcodecs
-if ( OpenCV_FOUND )
-  message(STATUS "OpenCV and boost_program_options found.")
-endif( OpenCV_FOUND)
+#find_package( OpenCV REQUIRED )#core imgproc highgui imgcodecs
+#if ( OpenCV_FOUND )
+#  message(STATUS "OpenCV and boost_program_options found.")
+#endif( OpenCV_FOUND)
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 #link_directories(${OpenCV_LIBRARY_DIRS})
