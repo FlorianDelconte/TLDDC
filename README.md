@@ -34,11 +34,11 @@ cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
 ## Run the program
-Generate a relief map :
+Generate a relief map (for example *PathToMesh* can be : ../examples/INRAE1b/Alder1.off ) :
 ```
 ./segunroll -i *PathToMesh* -n
 ```
-Generate all relief map from all mesh in an directory :
+Generate all relief map from all mesh in an directory (for example *PathToMeshDirectory* can be : ../examples/INRAE1a/) :
 ```
 cd mesures/
 ./makeAllRm.sh *PathToMeshDirectory*
