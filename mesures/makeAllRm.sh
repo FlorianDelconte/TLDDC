@@ -4,12 +4,9 @@
 #output file
 #rs=results.tex
 
-if [[ "$1" = "reset" ]]
-then
-    rm -f *-def-faces.id
-fi
+pathToMesh=$1
 
-for log in ../examples/INRAE1a/*.off
+for log in $pathToMesh*.off
 do
     logFile="$(basename $log)"
     logName=${logFile%.off}
