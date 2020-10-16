@@ -36,9 +36,10 @@ make
 ## Run the program
 Generate a relief map :
 ```
-./segunroll -i ../examples/INRAE1a/WildCherry2.off --voxelSize 5 --accRadius 200 --trackStep 20  --patchWidth 25 --patchHeight 100 --binWidth 0.01 --invertNormal false
+./segunroll -i *PathToMesh* -n
 ```
-Defect segmentation on surface log using our trained model (named 'leakyReLu.hdf5'):
+Generate all relief map from INRAE1a directory :
 ```
-./deep-segmentation.sh leakyReLu.hdf5 ../examples/INRAE1a/Beech.off
+cd mesures/
+./makeAllRm.sh
 ```

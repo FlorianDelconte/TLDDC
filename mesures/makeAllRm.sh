@@ -19,8 +19,8 @@ do
 
       if [[ ! -f $defectUnrollPoints ]]
       then
-          echo "../build/segunroll -i $log -o  $logName -n --intensityPerCm 40 --grayscaleOrigin 0 "
-          ../build/segunroll -i $log -o $logName -n --intensityPerCm 40 --grayscaleOrigin 0
+          echo "../build/segunroll -i $log -o  $logName -n "
+          ../build/segunroll -i $log -o $logName -n
       fi
 
 
