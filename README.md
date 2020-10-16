@@ -43,3 +43,9 @@ Generate all relief map from all mesh in an directory :
 cd mesures/
 ./makeAllRm.sh *PathToMeshDirectory*
 ```
+Reproduct result exposed in RRPR article :
+```
+cd mesures/
+./testINRAE1A.sh
+./testK_folds.sh
+```
