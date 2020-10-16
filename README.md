@@ -41,5 +41,5 @@ Generate a relief map :
 Generate all relief map from INRAE1a directory :
 ```
 cd mesures/
-./makeAllRm.sh
+./makeAllRm.sh *PathToExampleDirectory*
 ```
