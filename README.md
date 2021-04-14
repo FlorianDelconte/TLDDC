@@ -33,7 +33,7 @@ cd build
 cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
-## Tree Defect Segmentation usingGeometric Features and CNN 
+## Info for downloading
 Download datez using torrent files.
 models-ipol.torrent : download pre-trained models
 examples-ipol.torrent : download meshes and groundtruth id points
