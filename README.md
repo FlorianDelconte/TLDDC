@@ -34,13 +34,18 @@ cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
 ## Info for downloading
-Download using torrent files.
+Download using torrent files in your favourite torrent client :
+
 models-ipol.torrent : download pre-trained models
+
 examples-ipol.torrent : download meshes and groundtruth id points
 
 Or use direct download for model :
+
 http://91.173.109.8:44444/rrpr_models/models.tar.gz
+
 direct download for meshes and groundtruth :
+
 https://floriandelconte.github.io/data_TLDC/data_ipol/examples.tar.gz
 
 ## Run the program
