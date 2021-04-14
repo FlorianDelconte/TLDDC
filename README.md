@@ -40,7 +40,7 @@ models-ipol.torrent : download pre-trained models
 
 examples-ipol.torrent : download meshes and groundtruth id points
 
-Or use direct download for model :
+Or use direct download for models :
 
 http://91.173.109.8:44444/rrpr_models/models.tar.gz
 
