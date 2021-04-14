@@ -33,6 +33,16 @@ cd build
 cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
+## Tree Defect Segmentation usingGeometric Features and CNN 
+Download datez using torrent files.
+models-ipol.torrent : download pre-trained models
+examples-ipol.torrent : download meshes and groundtruth id points
+
+Or use direct download for model :
+http://91.173.109.8:44444/rrpr_models/models.tar.gz
+direct download for meshes and groundtruth :
+https://floriandelconte.github.io/data_TLDC/data_ipol/examples.tar.gz
+
 ## Run the program
 Generate a relief map (for example *PathToMesh* can be : *../examples/INRAE1b/Alder1.off* ) :
 ```
