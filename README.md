@@ -34,7 +34,7 @@ cmake ..  -DDGtal_DIR=/path/to/DGtal
 make
 ```
 ## Info for downloading
-Download datez using torrent files.
+Download using torrent files.
 models-ipol.torrent : download pre-trained models
 examples-ipol.torrent : download meshes and groundtruth id points
 
